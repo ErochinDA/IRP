@@ -1,8 +1,11 @@
 <html>
 	<head>
 	 <style>
+	* {
+  		box-sizing: border-box;
+  		margin: 0;
+	}
 	div.containerDate {
-	  height: 10em;
 	  display: flex;
 	  align-items: center;
 	  justify-content: center
@@ -10,12 +13,12 @@
 	div.containerDate p {
 	  margin: 0
 	  }
-	html { overflow:  hidden; }
+	html { overflow:  hidden;  font-family: 'tahoma'; }
   </style>
   </head>
 	<body>
 	<div style="text-align: center;">
-		<h3><span class="containerDate" id="datetime"/></h3>
+		<span class="containerDate" id="datetime"/>
 	</div>
 		<script>
 			timer();

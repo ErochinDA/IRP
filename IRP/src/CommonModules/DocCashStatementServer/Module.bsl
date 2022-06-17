@@ -19,9 +19,9 @@ Procedure SetGroupItemsList(Object, Form)
 	AttributesArray.Add("Company");
 	AttributesArray.Add("Status");
 	DocumentsServer.DeleteUnavailableTitleItemNames(AttributesArray);
-	For Each Atr In AttributesArray Do
-		Form.GroupItems.Add(Atr, ?(ValueIsFilled(Form.Items[Atr].Title), Form.Items[Atr].Title,
-			Object.Ref.Metadata().Attributes[Atr].Synonym + ":" + Chars.NBSp));
+	For Each Attr In AttributesArray Do
+		Form.GroupItems.Add(Attr, ?(ValueIsFilled(Form.Items[Attr].Title), Form.Items[Attr].Title,
+			Object.Ref.Metadata().Attributes[Attr].Synonym + ":" + Chars.NBSp));
 	EndDo;
 EndProcedure
 
@@ -76,15 +76,15 @@ Procedure FillTransactions(Object, AddInfo = Undefined) Export
 	Query = New Query();
 	Query.Text =
 	"SELECT
-	|	R3050T_RetailCash.PaymentType AS PaymentType,
-	|	R3050T_RetailCash.Account AS Account,
-	|	R3050T_RetailCash.AmountTurnover AS Amount,
-	|	R3050T_RetailCash.CommissionTurnover AS Commission,
-	|	R3050T_RetailCash.Account.Currency AS Currency
+	|	R3050T_PosCashBalances.PaymentType AS PaymentType,
+	|	R3050T_PosCashBalances.Account AS Account,
+	|	R3050T_PosCashBalances.AmountTurnover AS Amount,
+	|	R3050T_PosCashBalances.CommissionTurnover AS Commission,
+	|	R3050T_PosCashBalances.Account.Currency AS Currency
 	|FROM
-	|	AccumulationRegister.R3050T_RetailCash.Turnovers(BEGINOFPERIOD(&BegOfPeriod, DAY), ENDOFPERIOD(&EndOfPeriod, DAY),,
+	|	AccumulationRegister.R3050T_PosCashBalances.Turnovers(BEGINOFPERIOD(&BegOfPeriod, DAY), ENDOFPERIOD(&EndOfPeriod, DAY), ,
 	|		Company = &Company
-	|	AND Branch = &Branch) AS R3050T_RetailCash";
+	|	AND Branch = &Branch) AS R3050T_PosCashBalances";
 
 	Query.SetParameter("BegOfPeriod", Object.BegOfPeriod);
 	Query.SetParameter("EndOfPeriod", Object.EndOfPeriod);

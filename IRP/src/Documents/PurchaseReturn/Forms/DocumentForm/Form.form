@@ -1349,6 +1349,90 @@
           </extInfo>
         </items>
         <items xsi:type="form:FormField">
+          <name>ItemListIsService</name>
+          <id>724</id>
+          <enabled>true</enabled>
+          <userVisible>
+            <common>true</common>
+          </userVisible>
+          <dataPath xsi:type="form:DataPath">
+            <segments>Object.ItemList.IsService</segments>
+          </dataPath>
+          <extendedTooltip>
+            <name>ItemListIsServiceExtendedTooltip</name>
+            <id>726</id>
+            <visible>true</visible>
+            <enabled>true</enabled>
+            <userVisible>
+              <common>true</common>
+            </userVisible>
+            <type>Label</type>
+            <autoMaxWidth>true</autoMaxWidth>
+            <autoMaxHeight>true</autoMaxHeight>
+            <extInfo xsi:type="form:LabelDecorationExtInfo">
+              <horizontalAlign>Left</horizontalAlign>
+            </extInfo>
+          </extendedTooltip>
+          <contextMenu>
+            <name>ItemListIsServiceContextMenu</name>
+            <id>725</id>
+            <visible>true</visible>
+            <enabled>true</enabled>
+            <userVisible>
+              <common>true</common>
+            </userVisible>
+            <autoFill>true</autoFill>
+          </contextMenu>
+          <type>CheckBoxField</type>
+          <editMode>Enter</editMode>
+          <showInHeader>true</showInHeader>
+          <headerHorizontalAlign>Left</headerHorizontalAlign>
+          <showInFooter>true</showInFooter>
+          <extInfo xsi:type="form:CheckBoxFieldExtInfo"/>
+        </items>
+        <items xsi:type="form:FormField">
+          <name>ItemListUseSerialLotNumber</name>
+          <id>721</id>
+          <enabled>true</enabled>
+          <userVisible>
+            <common>true</common>
+          </userVisible>
+          <dataPath xsi:type="form:DataPath">
+            <segments>Object.ItemList.UseSerialLotNumber</segments>
+          </dataPath>
+          <extendedTooltip>
+            <name>ItemListUseSerialLotNumberExtendedTooltip</name>
+            <id>723</id>
+            <visible>true</visible>
+            <enabled>true</enabled>
+            <userVisible>
+              <common>true</common>
+            </userVisible>
+            <type>Label</type>
+            <autoMaxWidth>true</autoMaxWidth>
+            <autoMaxHeight>true</autoMaxHeight>
+            <extInfo xsi:type="form:LabelDecorationExtInfo">
+              <horizontalAlign>Left</horizontalAlign>
+            </extInfo>
+          </extendedTooltip>
+          <contextMenu>
+            <name>ItemListUseSerialLotNumberContextMenu</name>
+            <id>722</id>
+            <visible>true</visible>
+            <enabled>true</enabled>
+            <userVisible>
+              <common>true</common>
+            </userVisible>
+            <autoFill>true</autoFill>
+          </contextMenu>
+          <type>CheckBoxField</type>
+          <editMode>Enter</editMode>
+          <showInHeader>true</showInHeader>
+          <headerHorizontalAlign>Left</headerHorizontalAlign>
+          <showInFooter>true</showInFooter>
+          <extInfo xsi:type="form:CheckBoxFieldExtInfo"/>
+        </items>
+        <items xsi:type="form:FormField">
           <name>ItemListSerialLotNumbersPresentation</name>
           <id>451</id>
           <visible>true</visible>
@@ -2375,7 +2459,6 @@
             <autoMaxWidth>true</autoMaxWidth>
             <autoMaxHeight>true</autoMaxHeight>
             <placementArea>UserCmds</placementArea>
-            <toolTipRepresentation>Auto</toolTipRepresentation>
             <representationInContextMenu>Auto</representationInContextMenu>
           </items>
           <items xsi:type="form:Button">
@@ -2406,7 +2489,6 @@
             <autoMaxWidth>true</autoMaxWidth>
             <autoMaxHeight>true</autoMaxHeight>
             <placementArea>UserCmds</placementArea>
-            <toolTipRepresentation>Auto</toolTipRepresentation>
             <representationInContextMenu>Auto</representationInContextMenu>
           </items>
           <items xsi:type="form:Button">
@@ -2438,7 +2520,6 @@
             <height>1</height>
             <maxHeight>1</maxHeight>
             <placementArea>UserCmds</placementArea>
-            <toolTipRepresentation>Auto</toolTipRepresentation>
             <representationInContextMenu>Auto</representationInContextMenu>
           </items>
           <items xsi:type="form:Button">
@@ -2470,7 +2551,6 @@
             <autoMaxWidth>true</autoMaxWidth>
             <autoMaxHeight>true</autoMaxHeight>
             <placementArea>UserCmds</placementArea>
-            <toolTipRepresentation>Auto</toolTipRepresentation>
             <representationInContextMenu>Auto</representationInContextMenu>
           </items>
           <items xsi:type="form:Button">
@@ -2501,7 +2581,6 @@
             <autoMaxWidth>true</autoMaxWidth>
             <autoMaxHeight>true</autoMaxHeight>
             <placementArea>UserCmds</placementArea>
-            <toolTipRepresentation>Auto</toolTipRepresentation>
             <representationInContextMenu>Auto</representationInContextMenu>
           </items>
           <items xsi:type="form:Button">
@@ -2532,7 +2611,6 @@
             <autoMaxWidth>true</autoMaxWidth>
             <autoMaxHeight>true</autoMaxHeight>
             <placementArea>UserCmds</placementArea>
-            <toolTipRepresentation>Auto</toolTipRepresentation>
             <representationInContextMenu>Auto</representationInContextMenu>
           </items>
           <items xsi:type="form:Button">
@@ -2578,24 +2656,16 @@
           <name>ItemListSelection</name>
         </handlers>
         <handlers>
-          <event>OnActivateRow</event>
-          <name>ItemListOnActivateRow</name>
-        </handlers>
-        <handlers>
-          <event>OnStartEdit</event>
-          <name>ItemListOnStartEdit</name>
-        </handlers>
-        <handlers>
           <event>AfterDeleteRow</event>
           <name>ItemListAfterDeleteRow</name>
         </handlers>
         <handlers>
-          <event>OnChange</event>
-          <name>ItemListOnChange</name>
-        </handlers>
-        <handlers>
           <event>BeforeDeleteRow</event>
           <name>ItemListBeforeDeleteRow</name>
+        </handlers>
+        <handlers>
+          <event>BeforeAddRow</event>
+          <name>ItemListBeforeAddRow</name>
         </handlers>
         <searchStringAddition>
           <visible>true</visible>
@@ -2757,7 +2827,6 @@
             <autoMaxWidth>true</autoMaxWidth>
             <autoMaxHeight>true</autoMaxHeight>
             <placementArea>UserCmds</placementArea>
-            <toolTipRepresentation>Auto</toolTipRepresentation>
             <representationInContextMenu>Auto</representationInContextMenu>
           </items>
           <visible>true</visible>
@@ -4246,7 +4315,7 @@
             <id>509</id>
             <title>
               <key>en</key>
-              <value>Q</value>
+              <value>Quantity</value>
             </title>
             <visible>true</visible>
             <enabled>true</enabled>
@@ -6218,7 +6287,6 @@
       <autoMaxWidth>true</autoMaxWidth>
       <autoMaxHeight>true</autoMaxHeight>
       <placementArea>UserCmds</placementArea>
-      <toolTipRepresentation>Auto</toolTipRepresentation>
       <representationInContextMenu>Auto</representationInContextMenu>
       <locationInCommandBar>InAdditionalSubmenu</locationInCommandBar>
     </items>
@@ -6387,23 +6455,7 @@
         <edit>
           <common>true</common>
         </edit>
-      </columns>
-      <columns>
-        <name>UseSerialLotNumber</name>
-        <title>
-          <key>en</key>
-          <value>Use serial lot number</value>
-        </title>
-        <id>37</id>
-        <valueType>
-          <types>Boolean</types>
-        </valueType>
-        <view>
-          <common>true</common>
-        </view>
-        <edit>
-          <common>true</common>
-        </edit>
+        <functionalOptions>FunctionalOption.UseSerialLotNumbers</functionalOptions>
       </columns>
       <columns>
         <name>SerialLotNumberIsFilling</name>
@@ -6787,6 +6839,7 @@
     <edit>
       <common>true</common>
     </edit>
+    <functionalOptions>FunctionalOption.UseSerialLotNumbers</functionalOptions>
     <columns>
       <name>Key</name>
       <title>
@@ -6926,6 +6979,7 @@
     <edit>
       <common>true</common>
     </edit>
+    <functionalOptions>FunctionalOption.UseShipmentConfirmationAndGoodsReceipts</functionalOptions>
     <columns>
       <name>Item</name>
       <title>
@@ -7435,10 +7489,6 @@
     <handlers>
       <event>OnReadAtServer</event>
       <name>OnReadAtServer</name>
-    </handlers>
-    <handlers>
-      <event>BeforeWrite</event>
-      <name>BeforeWrite</name>
     </handlers>
     <handlers>
       <event>BeforeWriteAtServer</event>

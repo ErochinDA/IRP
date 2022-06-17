@@ -77,32 +77,42 @@ Scenario: _04096 preparation (Purchase invoice)
 			| "Documents.InternalSupplyRequest.FindByNumber(117).GetObject().Write(DocumentWriteMode.Posting);" |	
 	When Create document PurchaseOrder objects (check movements, PI before GR, not Use receipt sheduling)
 	And I execute 1C:Enterprise script at server
-			| "Documents.PurchaseOrder.FindByNumber(115).GetObject().Write(DocumentWriteMode.Posting);" |	
+			| "Documents.PurchaseOrder.FindByNumber(115).GetObject().Write(DocumentWriteMode.Posting);" |
+	And I execute 1C:Enterprise script at server	
 			| "Documents.PurchaseOrder.FindByNumber(116).GetObject().Write(DocumentWriteMode.Posting);" |
+	And I execute 1C:Enterprise script at server
 			| "Documents.PurchaseOrder.FindByNumber(117).GetObject().Write(DocumentWriteMode.Posting);" |
 	When Create document PurchaseOrder objects (with aging, prepaid, post-shipment credit)	
 	And I execute 1C:Enterprise script at server
 			| "Documents.PurchaseOrder.FindByNumber(323).GetObject().Write(DocumentWriteMode.Posting);" |	
+	And I execute 1C:Enterprise script at server
 			| "Documents.PurchaseOrder.FindByNumber(324).GetObject().Write(DocumentWriteMode.Posting);" |	
 	* Load GR
 	When Create document GoodsReceipt objects (check movements)
 	And I execute 1C:Enterprise script at server
-			| "Documents.GoodsReceipt.FindByNumber(115).GetObject().Write(DocumentWriteMode.Posting);" |	
+			| "Documents.GoodsReceipt.FindByNumber(115).GetObject().Write(DocumentWriteMode.Posting);" |
+	And I execute 1C:Enterprise script at server	
 			| "Documents.GoodsReceipt.FindByNumber(116).GetObject().Write(DocumentWriteMode.Posting);" |
 			// | "Documents.GoodsReceipt.FindByNumber(117).GetObject().Write(DocumentWriteMode.Posting);" |
 			| "Documents.GoodsReceipt.FindByNumber(118).GetObject().Write(DocumentWriteMode.Posting);" |
+	And I execute 1C:Enterprise script at server
 			| "Documents.GoodsReceipt.FindByNumber(119).GetObject().Write(DocumentWriteMode.Posting);" |
 	* Load PI
 	When Create document PurchaseInvoice objects (check movements)
 	And I execute 1C:Enterprise script at server
-		| "Documents.PurchaseInvoice.FindByNumber(115).GetObject().Write(DocumentWriteMode.Posting);" |	
+		| "Documents.PurchaseInvoice.FindByNumber(115).GetObject().Write(DocumentWriteMode.Posting);" |
+	And I execute 1C:Enterprise script at server	
 		| "Documents.PurchaseInvoice.FindByNumber(116).GetObject().Write(DocumentWriteMode.Posting);" |
+	And I execute 1C:Enterprise script at server
 		| "Documents.PurchaseInvoice.FindByNumber(117).GetObject().Write(DocumentWriteMode.Posting);" |	
+	And I execute 1C:Enterprise script at server
 		| "Documents.PurchaseInvoice.FindByNumber(118).GetObject().Write(DocumentWriteMode.Posting);" |	
+	And I execute 1C:Enterprise script at server
 		| "Documents.PurchaseInvoice.FindByNumber(119).GetObject().Write(DocumentWriteMode.Posting);" |	
 	When Create document PurchaseInvoice objects (with aging, prepaid, post-shipment credit)
 	And I execute 1C:Enterprise script at server
-		| "Documents.PurchaseInvoice.FindByNumber(323).GetObject().Write(DocumentWriteMode.Posting);" |	
+		| "Documents.PurchaseInvoice.FindByNumber(323).GetObject().Write(DocumentWriteMode.Posting);" |
+	And I execute 1C:Enterprise script at server	
 		| "Documents.PurchaseInvoice.FindByNumber(324).GetObject().Write(DocumentWriteMode.Posting);" |	
 	And I close all client application windows
 
@@ -256,13 +266,13 @@ Scenario: _040104 check Purchase invoice movements by the Register  "R4050 Stock
 		And I select "R4050 Stock inventory" exact value from "Register" drop-down list
 		And I click "Generate report" button
 		Then "ResultTable" spreadsheet document is equal
-			| 'Purchase invoice 115 dated 12.02.2021 15:13:56' | ''            | ''                    | ''          | ''             | ''             | ''         | ''          |
-			| 'Document registrations records'                 | ''            | ''                    | ''          | ''             | ''             | ''         | ''          |
-			| 'Register  "R4050 Stock inventory"'              | ''            | ''                    | ''          | ''             | ''             | ''         | ''          |
-			| ''                                               | 'Record type' | 'Period'              | 'Resources' | 'Dimensions'   | ''             | ''         | ''          |
-			| ''                                               | ''            | ''                    | 'Quantity'  | 'Company'      | 'Branch'       | 'Store'    | 'Item key'  |
-			| ''                                               | 'Receipt'     | '12.02.2021 15:13:56' | '5'         | 'Main Company' | 'Front office' | 'Store 02' | '36/Yellow' |
-			| ''                                               | 'Receipt'     | '12.02.2021 15:13:56' | '10'        | 'Main Company' | 'Front office' | 'Store 02' | 'S/Yellow'  |
+			| 'Purchase invoice 115 dated 12.02.2021 15:13:56' | ''            | ''                    | ''          | ''             | ''         | ''          |
+			| 'Document registrations records'                 | ''            | ''                    | ''          | ''             | ''         | ''          |
+			| 'Register  "R4050 Stock inventory"'              | ''            | ''                    | ''          | ''             | ''         | ''          |
+			| ''                                               | 'Record type' | 'Period'              | 'Resources' | 'Dimensions'   | ''         | ''          |
+			| ''                                               | ''            | ''                    | 'Quantity'  | 'Company'      | 'Store'    | 'Item key'  |
+			| ''                                               | 'Receipt'     | '12.02.2021 15:13:56' | '5'         | 'Main Company' | 'Store 02' | '36/Yellow' |
+			| ''                                               | 'Receipt'     | '12.02.2021 15:13:56' | '10'        | 'Main Company' | 'Store 02' | 'S/Yellow'  |
 		And I close all client application windows
 		
 Scenario: _040105 check Purchase invoice movements by the Register  "R4011 Free stocks"  (use GR)
@@ -571,12 +581,12 @@ Scenario: _0401069 check Purchase invoice movements by the Register  "R4014 Seri
 		And I select "R4014 Serial lot numbers" exact value from "Register" drop-down list
 		And I click "Generate report" button
 		Then "ResultTable" spreadsheet document is equal
-			| 'Purchase invoice 117 dated 12.02.2021 15:12:15' | ''            | ''                    | ''          | ''             | ''             | ''         | ''                  |
-			| 'Document registrations records'                 | ''            | ''                    | ''          | ''             | ''             | ''         | ''                  |
-			| 'Register  "R4014 Serial lot numbers"'           | ''            | ''                    | ''          | ''             | ''             | ''         | ''                  |
-			| ''                                               | 'Record type' | 'Period'              | 'Resources' | 'Dimensions'   | ''             | ''         | ''                  |
-			| ''                                               | ''            | ''                    | 'Quantity'  | 'Company'      | 'Branch'       | 'Item key' | 'Serial lot number' |
-			| ''                                               | 'Receipt'     | '12.02.2021 15:12:15' | '10'        | 'Main Company' | 'Front office' | 'S/Yellow' | '0512'              |
+			| 'Purchase invoice 117 dated 12.02.2021 15:12:15' | ''            | ''                    | ''          | ''             | ''             | ''         | ''         | ''                  |
+			| 'Document registrations records'                 | ''            | ''                    | ''          | ''             | ''             | ''         | ''         | ''                  |
+			| 'Register  "R4014 Serial lot numbers"'           | ''            | ''                    | ''          | ''             | ''             | ''         | ''         | ''                  |
+			| ''                                               | 'Record type' | 'Period'              | 'Resources' | 'Dimensions'   | ''             | ''         | ''         | ''                  |
+			| ''                                               | ''            | ''                    | 'Quantity'  | 'Company'      | 'Branch'       | 'Store'    | 'Item key' | 'Serial lot number' |
+			| ''                                               | 'Receipt'     | '12.02.2021 15:12:15' | '10'        | 'Main Company' | 'Front office' | ''         | 'S/Yellow' | '0512'              |
 		And I close all client application windows
 
 Scenario: _0401070 check Purchase invoice movements by the Register  "R5022 Expenses" (PO-PI)
@@ -648,19 +658,19 @@ Scenario: _0401014 check Purchase invoice movements by the Register  "R4010 Actu
 		Given I open hyperlink "e1cib/list/Document.PurchaseInvoice"
 		And I go to line in "List" table
 			| 'Number'  |
-			| '118' |
+			| '117' |
 	* Check movements by the Register  "R4010 Actual stocks"
 		And I click "Registrations report" button
 		And I select "R4010 Actual stocks" exact value from "Register" drop-down list
 		And I click "Generate report" button
 		Then "ResultTable" spreadsheet document is equal
-			| 'Purchase invoice 118 dated 12.02.2021 16:08:41' | ''            | ''                    | ''          | ''           | ''          |
-			| 'Document registrations records'                 | ''            | ''                    | ''          | ''           | ''          |
-			| 'Register  "R4010 Actual stocks"'                | ''            | ''                    | ''          | ''           | ''          |
-			| ''                                               | 'Record type' | 'Period'              | 'Resources' | 'Dimensions' | ''          |
-			| ''                                               | ''            | ''                    | 'Quantity'  | 'Store'      | 'Item key'  |
-			| ''                                               | 'Receipt'     | '12.02.2021 16:08:41' | '5'         | 'Store 02'   | '36/Yellow' |
-			
+			| 'Purchase invoice 117 dated 12.02.2021 15:12:15' | ''            | ''                    | ''          | ''           | ''         | ''                  |
+			| 'Document registrations records'                 | ''            | ''                    | ''          | ''           | ''         | ''                  |
+			| 'Register  "R4010 Actual stocks"'                | ''            | ''                    | ''          | ''           | ''         | ''                  |
+			| ''                                               | 'Record type' | 'Period'              | 'Resources' | 'Dimensions' | ''         | ''                  |
+			| ''                                               | ''            | ''                    | 'Quantity'  | 'Store'      | 'Item key' | 'Serial lot number' |
+			| ''                                               | 'Receipt'     | '12.02.2021 15:12:15' | '10'        | 'Store 02'   | 'S/Yellow' | '0512'              |
+			| ''                                               | 'Receipt'     | '12.02.2021 15:12:15' | '24'        | 'Store 02'   | '37/18SD'  | ''                  |	
 		And I close all client application windows
 
 Scenario: _0401015 check Purchase invoice movements by the Register  "R4031 Goods in transit (incoming)" (one string use GR, 2 string not use GR)

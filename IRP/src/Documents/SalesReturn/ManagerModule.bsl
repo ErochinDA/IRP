@@ -40,14 +40,16 @@ Function PostingGetDocumentDataTables(Ref, Cancel, PostingMode, Parameters, AddI
 	|	SalesReturnItemList.Key AS Key,
 	|	SalesReturnItemList.Ref.Currency AS Currency,
 	|	SUM(CASE
-	|		WHEN SalesReturnItemList.SalesInvoice.Date IS NULL
-	|			THEN SalesReturnItemList.LandedCost
-	|		ELSE SalesReturnItemList.TotalAmount
+	|		WHEN NOT SalesReturnItemList.SalesInvoice.Ref IS NULL
+	|		AND SalesReturnItemList.SalesInvoice REFS Document.SalesInvoice
+	|			THEN SalesReturnItemList.TotalAmount
+	|		ELSE SalesReturnItemList.LandedCost
 	|	END) AS Amount,
 	|	CASE
-	|		WHEN SalesReturnItemList.SalesInvoice.Date IS NULL
-	|			THEN FALSE
-	|		ELSE TRUE
+	|		WHEN NOT SalesReturnItemList.SalesInvoice.Ref IS NULL
+	|		AND SalesReturnItemList.SalesInvoice REFS Document.SalesInvoice
+	|			THEN TRUE
+	|		ELSE FALSE
 	|	END AS SalesInvoiceIsFilled,
 	|	SalesReturnItemList.SalesInvoice AS SalesInvoice
 	|FROM
@@ -62,12 +64,13 @@ Function PostingGetDocumentDataTables(Ref, Cancel, PostingMode, Parameters, AddI
 	|	SalesReturnItemList.Ref.Date,
 	|	SalesReturnItemList.Key,
 	|	SalesReturnItemList.Ref.Currency,
-	|	CASE
-	|		WHEN SalesReturnItemList.SalesInvoice.Date IS NULL
-	|			THEN FALSE
-	|		ELSE TRUE
-	|	END,
 	|	SalesReturnItemList.SalesInvoice,
+	|	CASE
+	|		WHEN NOT SalesReturnItemList.SalesInvoice.Ref IS NULL
+	|		AND SalesReturnItemList.SalesInvoice REFS Document.SalesInvoice
+	|			THEN TRUE
+	|		ELSE FALSE
+	|	END,
 	|	VALUE(Enum.BatchDirection.Receipt)";
 	
 	Query.SetParameter("Ref", Ref);
@@ -102,7 +105,7 @@ Function PostingGetDocumentDataTables(Ref, Cancel, PostingMode, Parameters, AddI
 	
 	BatchKeysInfo_DataTable = Parameters.PostingDataTables.Get(Parameters.Object.RegisterRecords.T6020S_BatchKeysInfo).RecordSet;
 	BatchKeysInfo_DataTableGrouped = BatchKeysInfo_DataTable.CopyColumns();
-	If BatchKeysInfo_DataTable.Count()Then
+	If BatchKeysInfo_DataTable.Count() Then
 		BatchKeysInfo_DataTableGrouped = BatchKeysInfo_DataTable.Copy(New Structure("CurrencyMovementType", CurrencyMovementType));
 		BatchKeysInfo_DataTableGrouped.GroupBy("Period, Direction, Company, Store, ItemKey, Currency, CurrencyMovementType, SalesInvoice", 
 		"Quantity, Amount");	
@@ -263,7 +266,8 @@ Function GetQueryTextsMasterTables()
 EndFunction
 
 Function ItemList()
-	Return "SELECT
+	Return 
+	"SELECT
 	|	RowIDInfo.Ref AS Ref,
 	|	RowIDInfo.Key AS Key,
 	|	MAX(RowIDInfo.RowID) AS RowID
@@ -337,7 +341,9 @@ Function ItemList()
 	|	ItemList.Ref.Branch AS Branch,
 	|	ItemList.Ref.LegalNameContract AS LegalNameContract,
 	|	ItemList.OffersAmount,
-	|	ItemList.PriceType
+	|	ItemList.PriceType,
+	|	ItemList.SalesPerson,
+	|	ItemList.Key
 	|INTO ItemList
 	|FROM
 	|	Document.SalesReturn.ItemList AS ItemList
@@ -384,22 +390,24 @@ Function OffersInfo()
 EndFunction
 
 Function SerialLotNumbers()
-	Return "SELECT
-		   |	SerialLotNumbers.Ref.Date AS Period,
-		   |	SerialLotNumbers.Ref.Company AS Company,
-		   |	SerialLotNumbers.Ref.Branch AS Branch,
-		   |	SerialLotNumbers.Key,
-		   |	SerialLotNumbers.SerialLotNumber,
-		   |	SerialLotNumbers.Quantity,
-		   |	ItemList.ItemKey AS ItemKey
-		   |INTO SerialLotNumbers
-		   |FROM
-		   |	Document.SalesReturn.SerialLotNumbers AS SerialLotNumbers
-		   |		LEFT JOIN Document.SalesReturn.ItemList AS ItemList
-		   |		ON SerialLotNumbers.Key = ItemList.Key
-		   |		AND ItemList.Ref = &Ref
-		   |WHERE
-		   |	SerialLotNumbers.Ref = &Ref";
+	Return 
+	"SELECT
+	|	SerialLotNumbers.Ref.Date AS Period,
+	|	SerialLotNumbers.Ref.Company AS Company,
+	|	SerialLotNumbers.Ref.Branch AS Branch,
+	|	SerialLotNumbers.Key,
+	|	SerialLotNumbers.SerialLotNumber,
+	|	SerialLotNumbers.SerialLotNumber.StockBalanceDetail AS StockBalanceDetail,
+	|	SerialLotNumbers.Quantity,
+	|	ItemList.ItemKey AS ItemKey
+	|INTO SerialLotNumbers
+	|FROM
+	|	Document.SalesReturn.SerialLotNumbers AS SerialLotNumbers
+	|		LEFT JOIN Document.SalesReturn.ItemList AS ItemList
+	|		ON SerialLotNumbers.Key = ItemList.Key
+	|		AND ItemList.Ref = &Ref
+	|WHERE
+	|	SerialLotNumbers.Ref = &Ref";
 EndFunction
 
 Function Taxes()
@@ -616,19 +624,41 @@ EndFunction
 #Region Stock
 
 Function R4010B_ActualStocks()
-	Return "SELECT
-		   |	VALUE(AccumulationRecordType.Receipt) AS RecordType,
-		   |	ItemList.Period,
-		   |	ItemList.Store,
-		   |	ItemList.ItemKey,
-		   |	ItemList.Quantity
-		   |INTO R4010B_ActualStocks
-		   |FROM
-		   |	ItemList AS ItemList
-		   |WHERE
-		   |	NOT ItemList.IsService
-		   |	AND NOT ItemList.UseGoodsReceipt
-		   |	AND NOT ItemList.GoodsReceiptExists";
+	Return 
+	"SELECT
+	|	VALUE(AccumulationRecordType.Receipt) AS RecordType,
+	|	ItemList.Period,
+	|	ItemList.Store,
+	|	ItemList.ItemKey,
+	|	CASE
+	|		WHEN SerialLotNumbers.StockBalanceDetail
+	|			THEN SerialLotNumbers.SerialLotNumber
+	|		ELSE VALUE(Catalog.SerialLotNumbers.EmptyRef)
+	|	END AS SerialLotNumber,
+	|	SUM(CASE
+	|		WHEN SerialLotNumbers.SerialLotNumber IS NULL
+	|			THEN ItemList.Quantity
+	|		ELSE SerialLotNumbers.Quantity
+	|	END) AS Quantity
+	|INTO R4010B_ActualStocks
+	|FROM
+	|	ItemList AS ItemList
+	|		LEFT JOIN SerialLotNumbers AS SerialLotNumbers
+	|		ON ItemList.Key = SerialLotNumbers.Key
+	|WHERE
+	|	NOT ItemList.IsService
+	|	AND NOT ItemList.UseGoodsReceipt
+	|	AND NOT ItemList.GoodsReceiptExists
+	|GROUP BY
+	|	VALUE(AccumulationRecordType.Receipt),
+	|	ItemList.Period,
+	|	ItemList.Store,
+	|	ItemList.ItemKey,
+	|	CASE
+	|		WHEN SerialLotNumbers.StockBalanceDetail
+	|			THEN SerialLotNumbers.SerialLotNumber
+	|		ELSE VALUE(Catalog.SerialLotNumbers.EmptyRef)
+	|	END";
 EndFunction
 
 Function R4011B_FreeStocks()
@@ -678,15 +708,25 @@ Function R4031B_GoodsInTransitIncoming()
 EndFunction
 
 Function R4050B_StockInventory()
-	Return "SELECT
-		   |	VALUE(AccumulationRecordType.Receipt) AS RecordType,
-		   |	*
-		   |INTO R4050B_StockInventory
-		   |FROM
-		   |	ItemList AS ItemList
-		   |WHERE
-		   |	NOT ItemList.IsService";
-
+	Return 
+	"SELECT
+	|	VALUE(AccumulationRecordType.Receipt) AS RecordType,
+	|	ItemList.Period,
+	|	ItemList.Company,
+	|	ItemLIst.Store,
+	|	ItemList.ItemKey,
+	|	SUM(ItemList.Quantity) AS Quantity
+	|INTO R4050B_StockInventory
+	|FROM
+	|	ItemList AS ItemList
+	|WHERE
+	|	NOT ItemList.IsService
+	|GROUP BY
+	|	VALUE(AccumulationRecordType.Receipt),
+	|	ItemList.Period,
+	|	ItemList.Company,
+	|	ItemLIst.Store,
+	|	ItemList.ItemKey";
 EndFunction
 
 #EndRegion

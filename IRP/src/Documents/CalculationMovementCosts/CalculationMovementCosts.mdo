@@ -18,6 +18,10 @@
   <createOnInput>DontUse</createOnInput>
   <dataLockControlMode>Managed</dataLockControlMode>
   <fullTextSearch>Use</fullTextSearch>
+  <objectPresentation>
+    <key>en</key>
+    <value>Calculation movement costs</value>
+  </objectPresentation>
   <numberLength>12</numberLength>
   <numberAllowedLength>Variable</numberAllowedLength>
   <checkUnique>true</checkUnique>
@@ -31,6 +35,8 @@
   <registerRecords>AccumulationRegister.R6030T_BatchShortageOutgoing</registerRecords>
   <registerRecords>AccumulationRegister.R6040T_BatchShortageIncoming</registerRecords>
   <registerRecords>AccumulationRegister.R6050T_SalesBatches</registerRecords>
+  <registerRecords>InformationRegister.T6080S_ReallocatedBatchesAmountValues</registerRecords>
+  <registerRecords>InformationRegister.T6090S_CompositeBatchesAmountValues</registerRecords>
   <postInPrivilegedMode>true</postInPrivilegedMode>
   <unpostInPrivilegedMode>true</unpostInPrivilegedMode>
   <attributes uuid="500ee3cd-8578-42cf-b4c4-4ba12cc07a58">
@@ -45,6 +51,12 @@
     <minValue xsi:type="core:UndefinedValue"/>
     <maxValue xsi:type="core:UndefinedValue"/>
     <fillChecking>ShowError</fillChecking>
+    <choiceParameters>
+      <name>Filter.OurCompany</name>
+      <value xsi:type="core:BooleanValue">
+        <value>true</value>
+      </value>
+    </choiceParameters>
     <fillValue xsi:type="core:UndefinedValue"/>
     <fullTextSearch>Use</fullTextSearch>
     <dataHistory>Use</dataHistory>

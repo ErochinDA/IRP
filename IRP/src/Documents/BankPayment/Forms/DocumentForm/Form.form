@@ -1752,7 +1752,7 @@
             <representationInContextMenu>Auto</representationInContextMenu>
           </items>
           <items xsi:type="form:Button">
-            <name>EditTrialBallanceAccounts</name>
+            <name>EditAccounting</name>
             <id>336</id>
             <visible>true</visible>
             <enabled>true</enabled>
@@ -1760,7 +1760,7 @@
               <common>true</common>
             </userVisible>
             <extendedTooltip>
-              <name>EditTrialBallanceAccountsExtendedTooltip</name>
+              <name>EditAccountingExtendedTooltip</name>
               <id>337</id>
               <visible>true</visible>
               <enabled>true</enabled>
@@ -1774,7 +1774,7 @@
                 <horizontalAlign>Left</horizontalAlign>
               </extInfo>
             </extendedTooltip>
-            <commandName>Form.Command.EditTrialBallanceAccounts</commandName>
+            <commandName>Form.Command.EditAccounting</commandName>
             <representation>Auto</representation>
             <autoMaxWidth>true</autoMaxWidth>
             <autoMaxHeight>true</autoMaxHeight>
@@ -1794,28 +1794,8 @@
           <name>PaymentListBeforeAddRow</name>
         </handlers>
         <handlers>
-          <event>OnActivateRow</event>
-          <name>PaymentListOnActivateRow</name>
-        </handlers>
-        <handlers>
-          <event>BeforeRowChange</event>
-          <name>PaymentListBeforeRowChange</name>
-        </handlers>
-        <handlers>
-          <event>OnStartEdit</event>
-          <name>PaymentListOnStartEdit</name>
-        </handlers>
-        <handlers>
           <event>AfterDeleteRow</event>
           <name>PaymentListAfterDeleteRow</name>
-        </handlers>
-        <handlers>
-          <event>OnActivateCell</event>
-          <name>PaymentListOnActivateCell</name>
-        </handlers>
-        <handlers>
-          <event>OnChange</event>
-          <name>PaymentListOnChange</name>
         </handlers>
         <handlers>
           <event>Selection</event>
@@ -2631,7 +2611,6 @@
       <autoMaxWidth>true</autoMaxWidth>
       <autoMaxHeight>true</autoMaxHeight>
       <placementArea>UserCmds</placementArea>
-      <toolTipRepresentation>Auto</toolTipRepresentation>
       <representationInContextMenu>Auto</representationInContextMenu>
       <locationInCommandBar>InAdditionalSubmenu</locationInCommandBar>
     </items>
@@ -2940,21 +2919,21 @@
     <currentRowUse>Auto</currentRowUse>
   </formCommands>
   <formCommands>
-    <name>EditTrialBallanceAccounts</name>
+    <name>EditAccounting</name>
     <title>
       <key>en</key>
-      <value>Edit trial ballance accounts</value>
+      <value>Edit accounting</value>
     </title>
     <id>4</id>
     <use>
       <common>true</common>
     </use>
     <picture xsi:type="core:PictureRef">
-      <picture>StdPicture.DebitCredit</picture>
+      <picture>StdPicture.ChartOfAccounts</picture>
     </picture>
     <action xsi:type="form:FormCommandHandlerContainer">
       <handler>
-        <name>EditTrialBallanceAccounts</name>
+        <name>EditAccounting</name>
       </handler>
     </action>
     <functionalOptions>FunctionalOption.UseAccounting</functionalOptions>

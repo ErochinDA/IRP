@@ -50,6 +50,14 @@ Scenario: _041300 preparation (Sales return)
 		When Create catalog ExpenseAndRevenueTypes objects
 		When Create catalog Companies objects (second company Ferron BP)
 		When Create catalog PartnersBankAccounts objects
+		When Create catalog ItemKeys objects (serial lot numbers)
+		When Create catalog ItemTypes objects (serial lot numbers)
+		When Create catalog Items objects (serial lot numbers)
+		When Create catalog SerialLotNumbers objects (serial lot numbers)
+		When Create information register Barcodes records (serial lot numbers)
+		When Create catalog SerialLotNumbers objects (serial lot numbers)
+		When Create information register Barcodes records (serial lot numbers)
+		When Create document ShipmentConfirmation (stock control serial lot numbers)
 		When update ItemKeys
 		When Create catalog SerialLotNumbers objects
 		When Create catalog CashAccounts objects
@@ -80,25 +88,36 @@ Scenario: _041300 preparation (Sales return)
 			When Create document SalesOrder objects (check movements, SI before SC, not Use shipment sheduling)
 		When Create document SalesOrder objects (SI more than SO)
 		And I execute 1C:Enterprise script at server
- 			| "Documents.SalesOrder.FindByNumber(1).GetObject().Write(DocumentWriteMode.Posting);" |	
+ 			| "Documents.SalesOrder.FindByNumber(1).GetObject().Write(DocumentWriteMode.Posting);" |
+		And I execute 1C:Enterprise script at server	
 			| "Documents.SalesOrder.FindByNumber(2).GetObject().Write(DocumentWriteMode.Posting);" |
+		And I execute 1C:Enterprise script at server
 			| "Documents.SalesOrder.FindByNumber(3).GetObject().Write(DocumentWriteMode.Posting);" |
+		And I execute 1C:Enterprise script at server
 			| "Documents.SalesOrder.FindByNumber(5).GetObject().Write(DocumentWriteMode.Posting);" |	
 	* Load SC
 		When Create document ShipmentConfirmation objects (check movements)
 		And I execute 1C:Enterprise script at server
  			| "Documents.ShipmentConfirmation.FindByNumber(1).GetObject().Write(DocumentWriteMode.Posting);" |
+		And I execute 1C:Enterprise script at server
 			| "Documents.ShipmentConfirmation.FindByNumber(2).GetObject().Write(DocumentWriteMode.Posting);" |
+		And I execute 1C:Enterprise script at server
 			| "Documents.ShipmentConfirmation.FindByNumber(3).GetObject().Write(DocumentWriteMode.Posting);" |
+		And I execute 1C:Enterprise script at server
 			| "Documents.ShipmentConfirmation.FindByNumber(8).GetObject().Write(DocumentWriteMode.Posting);" |
 	* Load Sales invoice document
 		When Create document SalesInvoice objects (check movements)
 		And I execute 1C:Enterprise script at server
  			| "Documents.SalesInvoice.FindByNumber(1).GetObject().Write(DocumentWriteMode.Posting);" |
+		And I execute 1C:Enterprise script at server
 			| "Documents.SalesInvoice.FindByNumber(2).GetObject().Write(DocumentWriteMode.Posting);" |
+		And I execute 1C:Enterprise script at server
 			| "Documents.SalesInvoice.FindByNumber(3).GetObject().Write(DocumentWriteMode.Posting);" |
+		And I execute 1C:Enterprise script at server
 			| "Documents.SalesInvoice.FindByNumber(4).GetObject().Write(DocumentWriteMode.Posting);" |
+		And I execute 1C:Enterprise script at server
 			| "Documents.SalesInvoice.FindByNumber(5).GetObject().Write(DocumentWriteMode.Posting);" |
+		And I execute 1C:Enterprise script at server
 			| "Documents.SalesInvoice.FindByNumber(8).GetObject().Write(DocumentWriteMode.Posting);" |
 	* Load Goods
 		When Create document GoodsReceipt objects (check movements, transaction type - return from customers)
@@ -116,17 +135,24 @@ Scenario: _041300 preparation (Sales return)
 		When Create document SalesInvoice objects (offsetting advances on returns)
 		And I execute 1C:Enterprise script at server
 			| "Documents.SalesInvoice.FindByNumber(101).GetObject().Write(DocumentWriteMode.Posting);" |
+		And I execute 1C:Enterprise script at server
 			| "Documents.SalesInvoice.FindByNumber(102).GetObject().Write(DocumentWriteMode.Posting);" |
 		When Create document BankReceipt objects (offsetting advances on returns)
 		And I execute 1C:Enterprise script at server
  			| "Documents.BankReceipt.FindByNumber(12).GetObject().Write(DocumentWriteMode.Posting);" |
 	* Load Sales return
 		When Create document SalesReturn objects (check movements)
+		When Create document SalesReturn objects (stock control serial lot numbers)
 		And I execute 1C:Enterprise script at server
  			| "Documents.SalesReturn.FindByNumber(101).GetObject().Write(DocumentWriteMode.Posting);" |
+		And I execute 1C:Enterprise script at server
 			| "Documents.SalesReturn.FindByNumber(102).GetObject().Write(DocumentWriteMode.Posting);" |
+		And I execute 1C:Enterprise script at server
 			| "Documents.SalesReturn.FindByNumber(103).GetObject().Write(DocumentWriteMode.Posting);" |
+		And I execute 1C:Enterprise script at server
 			| "Documents.SalesReturn.FindByNumber(105).GetObject().Write(DocumentWriteMode.Posting);" |
+		And I execute 1C:Enterprise script at server
+			| "Documents.SalesReturn.FindByNumber(1112).GetObject().Write(DocumentWriteMode.Posting);" |
 		Given I open hyperlink "e1cib/list/Document.SalesReturn"
 		And I go to line in "List" table
 			| 'Number'  |
@@ -135,8 +161,11 @@ Scenario: _041300 preparation (Sales return)
 		When Create document SalesReturn objects (offsetting advances on returns)
 		And I execute 1C:Enterprise script at server
  			| "Documents.SalesReturn.FindByNumber(106).GetObject().Write(DocumentWriteMode.Posting);" |
+		And I execute 1C:Enterprise script at server
 			| "Documents.SalesReturn.FindByNumber(107).GetObject().Write(DocumentWriteMode.Posting);" |
+		And I execute 1C:Enterprise script at server
 			| "Documents.SalesReturn.FindByNumber(108).GetObject().Write(DocumentWriteMode.Posting);" |
+		And I execute 1C:Enterprise script at server
 			| "Documents.SalesReturn.FindByNumber(109).GetObject().Write(DocumentWriteMode.Posting);" |
 		And I close all client application windows
 	
@@ -204,23 +233,23 @@ Scenario: _041304 check Sales return movements by the Register  "R2002 Sales ret
 		And I select "R2002 Sales returns" exact value from "Register" drop-down list
 		And I click "Generate report" button
 		Then "ResultTable" spreadsheet document is equal
-			| 'Sales return 101 dated 12.03.2021 08:44:18' | ''                    | ''          | ''       | ''           | ''             | ''                        | ''                             | ''         | ''                                          | ''         | ''                                     | ''              | ''                     |
-			| 'Document registrations records'             | ''                    | ''          | ''       | ''           | ''             | ''                        | ''                             | ''         | ''                                          | ''         | ''                                     | ''              | ''                     |
-			| 'Register  "R2002 Sales returns"'            | ''                    | ''          | ''       | ''           | ''             | ''                        | ''                             | ''         | ''                                          | ''         | ''                                     | ''              | ''                     |
-			| ''                                           | 'Period'              | 'Resources' | ''       | ''           | 'Dimensions'   | ''                        | ''                             | ''         | ''                                          | ''         | ''                                     | ''              | 'Attributes'           |
-			| ''                                           | ''                    | 'Quantity'  | 'Amount' | 'Net amount' | 'Company'      | 'Branch'                  | 'Multi currency movement type' | 'Currency' | 'Invoice'                                   | 'Item key' | 'Row key'                              | 'Return reason' | 'Deferred calculation' |
-			| ''                                           | '12.03.2021 08:44:18' | '1'         | '16,26'  | '13,78'      | 'Main Company' | 'Distribution department' | 'Reporting currency'           | 'USD'      | 'Sales invoice 1 dated 28.01.2021 18:48:53' | 'Interner' | '835ca87f-804e-4f3b-b02a-7a1f5d49abe0' | ''              | 'No'                   |
-			| ''                                           | '12.03.2021 08:44:18' | '1'         | '84,57'  | '71,67'      | 'Main Company' | 'Distribution department' | 'Reporting currency'           | 'USD'      | 'Sales invoice 1 dated 28.01.2021 18:48:53' | 'XS/Blue'  | '0cb89084-5857-45fc-b333-4fbec2c2e90a' | ''              | 'No'                   |
-			| ''                                           | '12.03.2021 08:44:18' | '1'         | '95'     | '80,51'      | 'Main Company' | 'Distribution department' | 'Local currency'               | 'TRY'      | 'Sales invoice 1 dated 28.01.2021 18:48:53' | 'Interner' | '835ca87f-804e-4f3b-b02a-7a1f5d49abe0' | ''              | 'No'                   |
-			| ''                                           | '12.03.2021 08:44:18' | '1'         | '95'     | '80,51'      | 'Main Company' | 'Distribution department' | 'TRY'                          | 'TRY'      | 'Sales invoice 1 dated 28.01.2021 18:48:53' | 'Interner' | '835ca87f-804e-4f3b-b02a-7a1f5d49abe0' | ''              | 'No'                   |
-			| ''                                           | '12.03.2021 08:44:18' | '1'         | '95'     | '80,51'      | 'Main Company' | 'Distribution department' | 'en description is empty'      | 'TRY'      | 'Sales invoice 1 dated 28.01.2021 18:48:53' | 'Interner' | '835ca87f-804e-4f3b-b02a-7a1f5d49abe0' | ''              | 'No'                   |
-			| ''                                           | '12.03.2021 08:44:18' | '1'         | '494'    | '418,64'     | 'Main Company' | 'Distribution department' | 'Local currency'               | 'TRY'      | 'Sales invoice 1 dated 28.01.2021 18:48:53' | 'XS/Blue'  | '0cb89084-5857-45fc-b333-4fbec2c2e90a' | ''              | 'No'                   |
-			| ''                                           | '12.03.2021 08:44:18' | '1'         | '494'    | '418,64'     | 'Main Company' | 'Distribution department' | 'TRY'                          | 'TRY'      | 'Sales invoice 1 dated 28.01.2021 18:48:53' | 'XS/Blue'  | '0cb89084-5857-45fc-b333-4fbec2c2e90a' | ''              | 'No'                   |
-			| ''                                           | '12.03.2021 08:44:18' | '1'         | '494'    | '418,64'     | 'Main Company' | 'Distribution department' | 'en description is empty'      | 'TRY'      | 'Sales invoice 1 dated 28.01.2021 18:48:53' | 'XS/Blue'  | '0cb89084-5857-45fc-b333-4fbec2c2e90a' | ''              | 'No'                   |
-			| ''                                           | '12.03.2021 08:44:18' | '2'         | '113,85' | '96,48'      | 'Main Company' | 'Distribution department' | 'Reporting currency'           | 'USD'      | 'Sales invoice 1 dated 28.01.2021 18:48:53' | '36/Red'   | '3a8fe357-b7bd-4d83-8816-c8348bbf4595' | ''              | 'No'                   |
-			| ''                                           | '12.03.2021 08:44:18' | '2'         | '665'    | '563,56'     | 'Main Company' | 'Distribution department' | 'Local currency'               | 'TRY'      | 'Sales invoice 1 dated 28.01.2021 18:48:53' | '36/Red'   | '3a8fe357-b7bd-4d83-8816-c8348bbf4595' | ''              | 'No'                   |
-			| ''                                           | '12.03.2021 08:44:18' | '2'         | '665'    | '563,56'     | 'Main Company' | 'Distribution department' | 'TRY'                          | 'TRY'      | 'Sales invoice 1 dated 28.01.2021 18:48:53' | '36/Red'   | '3a8fe357-b7bd-4d83-8816-c8348bbf4595' | ''              | 'No'                   |
-			| ''                                           | '12.03.2021 08:44:18' | '2'         | '665'    | '563,56'     | 'Main Company' | 'Distribution department' | 'en description is empty'      | 'TRY'      | 'Sales invoice 1 dated 28.01.2021 18:48:53' | '36/Red'   | '3a8fe357-b7bd-4d83-8816-c8348bbf4595' | ''              | 'No'                   |
+			| 'Sales return 101 dated 12.03.2021 08:44:18' | ''                    | ''          | ''       | ''           | ''             | ''                        | ''                             | ''         | ''                                          | ''         | ''                                     | ''              | ''                | ''                     |
+			| 'Document registrations records'             | ''                    | ''          | ''       | ''           | ''             | ''                        | ''                             | ''         | ''                                          | ''         | ''                                     | ''              | ''                | ''                     |
+			| 'Register  "R2002 Sales returns"'            | ''                    | ''          | ''       | ''           | ''             | ''                        | ''                             | ''         | ''                                          | ''         | ''                                     | ''              | ''                | ''                     |
+			| ''                                           | 'Period'              | 'Resources' | ''       | ''           | 'Dimensions'   | ''                        | ''                             | ''         | ''                                          | ''         | ''                                     | ''              | ''                | 'Attributes'           |
+			| ''                                           | ''                    | 'Quantity'  | 'Amount' | 'Net amount' | 'Company'      | 'Branch'                  | 'Multi currency movement type' | 'Currency' | 'Invoice'                                   | 'Item key' | 'Row key'                              | 'Return reason' | 'Sales person'    | 'Deferred calculation' |
+			| ''                                           | '12.03.2021 08:44:18' | '1'         | '16,26'  | '13,78'      | 'Main Company' | 'Distribution department' | 'Reporting currency'           | 'USD'      | 'Sales invoice 1 dated 28.01.2021 18:48:53' | 'Interner' | '835ca87f-804e-4f3b-b02a-7a1f5d49abe0' | ''              | ''                | 'No'                   |
+			| ''                                           | '12.03.2021 08:44:18' | '1'         | '84,57'  | '71,67'      | 'Main Company' | 'Distribution department' | 'Reporting currency'           | 'USD'      | 'Sales invoice 1 dated 28.01.2021 18:48:53' | 'XS/Blue'  | '0cb89084-5857-45fc-b333-4fbec2c2e90a' | ''              | 'Alexander Orlov' | 'No'                   |
+			| ''                                           | '12.03.2021 08:44:18' | '1'         | '95'     | '80,51'      | 'Main Company' | 'Distribution department' | 'Local currency'               | 'TRY'      | 'Sales invoice 1 dated 28.01.2021 18:48:53' | 'Interner' | '835ca87f-804e-4f3b-b02a-7a1f5d49abe0' | ''              | ''                | 'No'                   |
+			| ''                                           | '12.03.2021 08:44:18' | '1'         | '95'     | '80,51'      | 'Main Company' | 'Distribution department' | 'TRY'                          | 'TRY'      | 'Sales invoice 1 dated 28.01.2021 18:48:53' | 'Interner' | '835ca87f-804e-4f3b-b02a-7a1f5d49abe0' | ''              | ''                | 'No'                   |
+			| ''                                           | '12.03.2021 08:44:18' | '1'         | '95'     | '80,51'      | 'Main Company' | 'Distribution department' | 'en description is empty'      | 'TRY'      | 'Sales invoice 1 dated 28.01.2021 18:48:53' | 'Interner' | '835ca87f-804e-4f3b-b02a-7a1f5d49abe0' | ''              | ''                | 'No'                   |
+			| ''                                           | '12.03.2021 08:44:18' | '1'         | '494'    | '418,64'     | 'Main Company' | 'Distribution department' | 'Local currency'               | 'TRY'      | 'Sales invoice 1 dated 28.01.2021 18:48:53' | 'XS/Blue'  | '0cb89084-5857-45fc-b333-4fbec2c2e90a' | ''              | 'Alexander Orlov' | 'No'                   |
+			| ''                                           | '12.03.2021 08:44:18' | '1'         | '494'    | '418,64'     | 'Main Company' | 'Distribution department' | 'TRY'                          | 'TRY'      | 'Sales invoice 1 dated 28.01.2021 18:48:53' | 'XS/Blue'  | '0cb89084-5857-45fc-b333-4fbec2c2e90a' | ''              | 'Alexander Orlov' | 'No'                   |
+			| ''                                           | '12.03.2021 08:44:18' | '1'         | '494'    | '418,64'     | 'Main Company' | 'Distribution department' | 'en description is empty'      | 'TRY'      | 'Sales invoice 1 dated 28.01.2021 18:48:53' | 'XS/Blue'  | '0cb89084-5857-45fc-b333-4fbec2c2e90a' | ''              | 'Alexander Orlov' | 'No'                   |
+			| ''                                           | '12.03.2021 08:44:18' | '2'         | '113,85' | '96,48'      | 'Main Company' | 'Distribution department' | 'Reporting currency'           | 'USD'      | 'Sales invoice 1 dated 28.01.2021 18:48:53' | '36/Red'   | '3a8fe357-b7bd-4d83-8816-c8348bbf4595' | ''              | 'Alexander Orlov' | 'No'                   |
+			| ''                                           | '12.03.2021 08:44:18' | '2'         | '665'    | '563,56'     | 'Main Company' | 'Distribution department' | 'Local currency'               | 'TRY'      | 'Sales invoice 1 dated 28.01.2021 18:48:53' | '36/Red'   | '3a8fe357-b7bd-4d83-8816-c8348bbf4595' | ''              | 'Alexander Orlov' | 'No'                   |
+			| ''                                           | '12.03.2021 08:44:18' | '2'         | '665'    | '563,56'     | 'Main Company' | 'Distribution department' | 'TRY'                          | 'TRY'      | 'Sales invoice 1 dated 28.01.2021 18:48:53' | '36/Red'   | '3a8fe357-b7bd-4d83-8816-c8348bbf4595' | ''              | 'Alexander Orlov' | 'No'                   |
+			| ''                                           | '12.03.2021 08:44:18' | '2'         | '665'    | '563,56'     | 'Main Company' | 'Distribution department' | 'en description is empty'      | 'TRY'      | 'Sales invoice 1 dated 28.01.2021 18:48:53' | '36/Red'   | '3a8fe357-b7bd-4d83-8816-c8348bbf4595' | ''              | 'Alexander Orlov' | 'No'                   |
 	And I close all client application windows
 
 Scenario: _041305 check Sales return movements by the Register  "R4050 Stock inventory"
@@ -234,13 +263,13 @@ Scenario: _041305 check Sales return movements by the Register  "R4050 Stock inv
 		And I select "R4050 Stock inventory" exact value from "Register" drop-down list
 		And I click "Generate report" button
 		Then "ResultTable" spreadsheet document is equal
-			| 'Sales return 101 dated 12.03.2021 08:44:18' | ''            | ''                    | ''          | ''             | ''                        | ''         | ''         |
-			| 'Document registrations records'             | ''            | ''                    | ''          | ''             | ''                        | ''         | ''         |
-			| 'Register  "R4050 Stock inventory"'          | ''            | ''                    | ''          | ''             | ''                        | ''         | ''         |
-			| ''                                           | 'Record type' | 'Period'              | 'Resources' | 'Dimensions'   | ''                        | ''         | ''         |
-			| ''                                           | ''            | ''                    | 'Quantity'  | 'Company'      | 'Branch'                  | 'Store'    | 'Item key' |
-			| ''                                           | 'Receipt'     | '12.03.2021 08:44:18' | '1'         | 'Main Company' | 'Distribution department' | 'Store 02' | 'XS/Blue'  |
-			| ''                                           | 'Receipt'     | '12.03.2021 08:44:18' | '2'         | 'Main Company' | 'Distribution department' | 'Store 02' | '36/Red'   |
+			| 'Sales return 101 dated 12.03.2021 08:44:18' | ''            | ''                    | ''          | ''             | ''         | ''         |
+			| 'Document registrations records'             | ''            | ''                    | ''          | ''             | ''         | ''         |
+			| 'Register  "R4050 Stock inventory"'          | ''            | ''                    | ''          | ''             | ''         | ''         |
+			| ''                                           | 'Record type' | 'Period'              | 'Resources' | 'Dimensions'   | ''         | ''         |
+			| ''                                           | ''            | ''                    | 'Quantity'  | 'Company'      | 'Store'    | 'Item key' |
+			| ''                                           | 'Receipt'     | '12.03.2021 08:44:18' | '1'         | 'Main Company' | 'Store 02' | 'XS/Blue'  |
+			| ''                                           | 'Receipt'     | '12.03.2021 08:44:18' | '2'         | 'Main Company' | 'Store 02' | '36/Red'   |
 	And I close all client application windows
 
 
@@ -299,12 +328,12 @@ Scenario: _041308 check Sales return movements by the Register  "R4014 Serial lo
 		And I select "R4014 Serial lot numbers" exact value from "Register" drop-down list
 		And I click "Generate report" button
 		Then "ResultTable" spreadsheet document is equal
-			| 'Sales return 105 dated 12.03.2021 09:49:05' | ''            | ''                    | ''          | ''             | ''                        | ''         | ''                  |
-			| 'Document registrations records'             | ''            | ''                    | ''          | ''             | ''                        | ''         | ''                  |
-			| 'Register  "R4014 Serial lot numbers"'       | ''            | ''                    | ''          | ''             | ''                        | ''         | ''                  |
-			| ''                                           | 'Record type' | 'Period'              | 'Resources' | 'Dimensions'   | ''                        | ''         | ''                  |
-			| ''                                           | ''            | ''                    | 'Quantity'  | 'Company'      | 'Branch'                  | 'Item key' | 'Serial lot number' |
-			| ''                                           | 'Receipt'     | '12.03.2021 09:49:05' | '10'        | 'Main Company' | 'Distribution department' | '36/Red'   | '0512'              |
+			| 'Sales return 105 dated 12.03.2021 09:49:05' | ''            | ''                    | ''          | ''             | ''                        | ''         | ''         | ''                  |
+			| 'Document registrations records'             | ''            | ''                    | ''          | ''             | ''                        | ''         | ''         | ''                  |
+			| 'Register  "R4014 Serial lot numbers"'       | ''            | ''                    | ''          | ''             | ''                        | ''         | ''         | ''                  |
+			| ''                                           | 'Record type' | 'Period'              | 'Resources' | 'Dimensions'   | ''                        | ''         | ''         | ''                  |
+			| ''                                           | ''            | ''                    | 'Quantity'  | 'Company'      | 'Branch'                  | 'Store'    | 'Item key' | 'Serial lot number' |
+			| ''                                           | 'Receipt'     | '12.03.2021 09:49:05' | '10'        | 'Main Company' | 'Distribution department' | ''         | '36/Red'   | '0512'              |
 	And I close all client application windows
 
 Scenario: _041309 check Sales return movements by the Register  "R5021 Revenues"
@@ -351,12 +380,12 @@ Scenario: _041310 check Sales return movements by the Register  "R4010 Actual st
 		And I select "R4010 Actual stocks" exact value from "Register" drop-down list
 		And I click "Generate report" button
 		Then "ResultTable" spreadsheet document is equal
-			| 'Sales return 101 dated 12.03.2021 08:44:18' | ''            | ''                    | ''          | ''           | ''         |
-			| 'Document registrations records'             | ''            | ''                    | ''          | ''           | ''         |
-			| 'Register  "R4010 Actual stocks"'            | ''            | ''                    | ''          | ''           | ''         |
-			| ''                                           | 'Record type' | 'Period'              | 'Resources' | 'Dimensions' | ''         |
-			| ''                                           | ''            | ''                    | 'Quantity'  | 'Store'      | 'Item key' |
-			| ''                                           | 'Receipt'     | '12.03.2021 08:44:18' | '2'         | 'Store 02'   | '36/Red'   |
+			| 'Sales return 101 dated 12.03.2021 08:44:18' | ''            | ''                    | ''          | ''           | ''         | ''                  |
+			| 'Document registrations records'             | ''            | ''                    | ''          | ''           | ''         | ''                  |
+			| 'Register  "R4010 Actual stocks"'            | ''            | ''                    | ''          | ''           | ''         | ''                  |
+			| ''                                           | 'Record type' | 'Period'              | 'Resources' | 'Dimensions' | ''         | ''                  |
+			| ''                                           | ''            | ''                    | 'Quantity'  | 'Store'      | 'Item key' | 'Serial lot number' |
+			| ''                                           | 'Receipt'     | '12.03.2021 08:44:18' | '2'         | 'Store 02'   | '36/Red'   | ''                  |
 		
 	And I close all client application windows
 
@@ -550,7 +579,32 @@ Scenario: _041319 check Sales return movements by the Register  "R2012 Invoice c
 			| ''                                                  | 'Expense'     | '12.03.2021 09:20:35' | '24'        | '15 960' | '13 525,42'  | 'Main Company' | 'Distribution department' | 'Sales return order 102 dated 12.03.2021 09:19:54' | 'TRY'      | '37/18SD'  | 'f06154aa-5906-4824-9983-19e2bc9ccb96' |
 	And I close all client application windows
 
-
+Scenario: _041320 check Sales return with serial lot numbers movements by the Register  "R4010 Actual stocks" (not use GR)
+	And I close all client application windows
+	* Select Sales return
+		Given I open hyperlink "e1cib/list/Document.SalesReturn"
+		And I go to line in "List" table
+			| 'Number'  |
+			| '1 112' |
+		And I select current line in "List" table
+		And I activate "Use goods receipt" field in "ItemList" table
+		And for each line of "ItemList" table I do
+			And I remove "Use goods receipt" checkbox in "ItemList" table		
+	* Check movements by the Register  "R4010 Actual stocks"
+		And I click "Registrations report" button
+		And I select "R4010 Actual stocks" exact value from "Register" drop-down list
+		And I click "Generate report" button
+		Then "ResultTable" spreadsheet document is equal
+			| 'Sales return 1 112 dated 20.05.2022 18:36:56' | ''            | ''                    | ''          | ''           | ''         | ''                  |
+			| 'Document registrations records'               | ''            | ''                    | ''          | ''           | ''         | ''                  |
+			| 'Register  "R4010 Actual stocks"'              | ''            | ''                    | ''          | ''           | ''         | ''                  |
+			| ''                                             | 'Record type' | 'Period'              | 'Resources' | 'Dimensions' | ''         | ''                  |
+			| ''                                             | ''            | ''                    | 'Quantity'  | 'Store'      | 'Item key' | 'Serial lot number' |
+			| ''                                             | 'Receipt'     | '20.05.2022 18:36:56' | '5'         | 'Store 02'   | 'PZU'      | '8908899877'        |
+			| ''                                             | 'Receipt'     | '20.05.2022 18:36:56' | '5'         | 'Store 02'   | 'PZU'      | '8908899879'        |
+			| ''                                             | 'Receipt'     | '20.05.2022 18:36:56' | '10'        | 'Store 02'   | 'XL/Green' | ''                  |
+			| ''                                             | 'Receipt'     | '20.05.2022 18:36:56' | '10'        | 'Store 02'   | 'UNIQ'     | ''                  |		
+	And I close all client application windows
 
 Scenario: _041326 check Sales return movements by the Register  "T2015 Transactions info"
 	And I close all client application windows
@@ -564,12 +618,12 @@ Scenario: _041326 check Sales return movements by the Register  "T2015 Transacti
 		And I select "T2015 Transactions info" exact value from "Register" drop-down list
 		And I click "Generate report" button
 		Then "ResultTable" spreadsheet document is equal
-			| 'Sales return 106 dated 21.04.2021 14:19:47' | ''          | ''       | ''        | ''                    | ''    | ''             | ''                        | ''         | ''        | ''              | ''                         | ''      | ''                      | ''                        | ''                                           | ''                                           |
-			| 'Document registrations records'             | ''          | ''       | ''        | ''                    | ''    | ''             | ''                        | ''         | ''        | ''              | ''                         | ''      | ''                      | ''                        | ''                                           | ''                                           |
-			| 'Register  "T2015 Transactions info"'        | ''          | ''       | ''        | ''                    | ''    | ''             | ''                        | ''         | ''        | ''              | ''                         | ''      | ''                      | ''                        | ''                                           | ''                                           |
-			| ''                                           | 'Resources' | ''       | ''        | 'Dimensions'          | ''    | ''             | ''                        | ''         | ''        | ''              | ''                         | ''      | ''                      | ''                        | ''                                           | ''                                           |
-			| ''                                           | 'Amount'    | 'Is due' | 'Is paid' | 'Date'                | 'Key' | 'Company'      | 'Branch'                  | 'Currency' | 'Partner' | 'Legal name'    | 'Agreement'                | 'Order' | 'Is vendor transaction' | 'Is customer transaction' | 'Transaction basis'                          | 'Unique ID'                                  |
-			| ''                                           | '-9 360'    | 'Yes'    | 'No'      | '21.04.2021 14:19:47' | ''    | 'Main Company' | 'Distribution department' | 'TRY'      | 'Lunch'   | 'Company Lunch' | 'Basic Partner terms, TRY' | ''      | 'No'                    | 'Yes'                     | 'Sales return 106 dated 21.04.2021 14:19:47' | '*'                                          |		
+			| 'Sales return 106 dated 21.04.2021 14:19:47' | ''          | ''       | ''        | ''                    | ''                                     | ''             | ''                        | ''         | ''        | ''              | ''                         | ''      | ''                      | ''                        | ''                                           | ''          |
+			| 'Document registrations records'             | ''          | ''       | ''        | ''                    | ''                                     | ''             | ''                        | ''         | ''        | ''              | ''                         | ''      | ''                      | ''                        | ''                                           | ''          |
+			| 'Register  "T2015 Transactions info"'        | ''          | ''       | ''        | ''                    | ''                                     | ''             | ''                        | ''         | ''        | ''              | ''                         | ''      | ''                      | ''                        | ''                                           | ''          |
+			| ''                                           | 'Resources' | ''       | ''        | 'Dimensions'          | ''                                     | ''             | ''                        | ''         | ''        | ''              | ''                         | ''      | ''                      | ''                        | ''                                           | ''          |
+			| ''                                           | 'Amount'    | 'Is due' | 'Is paid' | 'Date'                | 'Key'                                  | 'Company'      | 'Branch'                  | 'Currency' | 'Partner' | 'Legal name'    | 'Agreement'                | 'Order' | 'Is vendor transaction' | 'Is customer transaction' | 'Transaction basis'                          | 'Unique ID' |
+			| ''                                           | '-9 360'    | 'Yes'    | 'No'      | '21.04.2021 14:19:47' | '                                    ' | 'Main Company' | 'Distribution department' | 'TRY'      | 'Lunch'   | 'Company Lunch' | 'Basic Partner terms, TRY' | ''      | 'No'                    | 'Yes'                     | 'Sales return 106 dated 21.04.2021 14:19:47' | '*'         |		
 	And I close all client application windows
 
 
@@ -587,15 +641,15 @@ Scenario: _041325 check Sales return movements by the Register  "R2001 Sales"
 		And I select "R2001 Sales" exact value from "Register" drop-down list
 		And I click "Generate report" button
 		Then "ResultTable" spreadsheet document is equal
-			| 'Sales return 107 dated 21.04.2021 14:24:43' | ''                    | ''          | ''       | ''           | ''              | ''             | ''                        | ''                             | ''         | ''                                            | ''         | ''                                     |
-			| 'Document registrations records'             | ''                    | ''          | ''       | ''           | ''              | ''             | ''                        | ''                             | ''         | ''                                            | ''         | ''                                     |
-			| 'Register  "R2001 Sales"'                    | ''                    | ''          | ''       | ''           | ''              | ''             | ''                        | ''                             | ''         | ''                                            | ''         | ''                                     |
-			| ''                                           | 'Period'              | 'Resources' | ''       | ''           | ''              | 'Dimensions'   | ''                        | ''                             | ''         | ''                                            | ''         | ''                                     |
-			| ''                                           | ''                    | 'Quantity'  | 'Amount' | 'Net amount' | 'Offers amount' | 'Company'      | 'Branch'                  | 'Multi currency movement type' | 'Currency' | 'Invoice'                                     | 'Item key' | 'Row key'                              |
-			| ''                                           | '21.04.2021 14:24:43' | '-1'        | '-520'   | '-440,68'    | ''              | 'Main Company' | 'Distribution department' | 'Local currency'               | 'TRY'      | 'Sales invoice 101 dated 21.04.2021 14:10:58' | 'XS/Blue'  | 'f441f6a4-f90d-4139-a593-e2d3d7c111ef' |
-			| ''                                           | '21.04.2021 14:24:43' | '-1'        | '-520'   | '-440,68'    | ''              | 'Main Company' | 'Distribution department' | 'TRY'                          | 'TRY'      | 'Sales invoice 101 dated 21.04.2021 14:10:58' | 'XS/Blue'  | 'f441f6a4-f90d-4139-a593-e2d3d7c111ef' |
-			| ''                                           | '21.04.2021 14:24:43' | '-1'        | '-520'   | '-440,68'    | ''              | 'Main Company' | 'Distribution department' | 'en description is empty'      | 'TRY'      | 'Sales invoice 101 dated 21.04.2021 14:10:58' | 'XS/Blue'  | 'f441f6a4-f90d-4139-a593-e2d3d7c111ef' |
-			| ''                                           | '21.04.2021 14:24:43' | '-1'        | '-89,02' | '-75,44'     | ''              | 'Main Company' | 'Distribution department' | 'Reporting currency'           | 'USD'      | 'Sales invoice 101 dated 21.04.2021 14:10:58' | 'XS/Blue'  | 'f441f6a4-f90d-4139-a593-e2d3d7c111ef' |
+			| 'Sales return 107 dated 21.04.2021 14:24:43' | ''                    | ''          | ''       | ''           | ''              | ''             | ''                        | ''                             | ''         | ''                                            | ''         | ''                                     | ''             |
+			| 'Document registrations records'             | ''                    | ''          | ''       | ''           | ''              | ''             | ''                        | ''                             | ''         | ''                                            | ''         | ''                                     | ''             |
+			| 'Register  "R2001 Sales"'                    | ''                    | ''          | ''       | ''           | ''              | ''             | ''                        | ''                             | ''         | ''                                            | ''         | ''                                     | ''             |
+			| ''                                           | 'Period'              | 'Resources' | ''       | ''           | ''              | 'Dimensions'   | ''                        | ''                             | ''         | ''                                            | ''         | ''                                     | ''             |
+			| ''                                           | ''                    | 'Quantity'  | 'Amount' | 'Net amount' | 'Offers amount' | 'Company'      | 'Branch'                  | 'Multi currency movement type' | 'Currency' | 'Invoice'                                     | 'Item key' | 'Row key'                              | 'Sales person' |
+			| ''                                           | '21.04.2021 14:24:43' | '-1'        | '-520'   | '-440,68'    | ''              | 'Main Company' | 'Distribution department' | 'Local currency'               | 'TRY'      | 'Sales invoice 101 dated 21.04.2021 14:10:58' | 'XS/Blue'  | 'f441f6a4-f90d-4139-a593-e2d3d7c111ef' | ''             |
+			| ''                                           | '21.04.2021 14:24:43' | '-1'        | '-520'   | '-440,68'    | ''              | 'Main Company' | 'Distribution department' | 'TRY'                          | 'TRY'      | 'Sales invoice 101 dated 21.04.2021 14:10:58' | 'XS/Blue'  | 'f441f6a4-f90d-4139-a593-e2d3d7c111ef' | ''             |
+			| ''                                           | '21.04.2021 14:24:43' | '-1'        | '-520'   | '-440,68'    | ''              | 'Main Company' | 'Distribution department' | 'en description is empty'      | 'TRY'      | 'Sales invoice 101 dated 21.04.2021 14:10:58' | 'XS/Blue'  | 'f441f6a4-f90d-4139-a593-e2d3d7c111ef' | ''             |
+			| ''                                           | '21.04.2021 14:24:43' | '-1'        | '-89,02' | '-75,44'     | ''              | 'Main Company' | 'Distribution department' | 'Reporting currency'           | 'USD'      | 'Sales invoice 101 dated 21.04.2021 14:10:58' | 'XS/Blue'  | 'f441f6a4-f90d-4139-a593-e2d3d7c111ef' | ''             |
 	And I close all client application windows
 
 Scenario: _041327 check Sales return movements by the Register  "R2001 Sales" (withot SI)
@@ -610,23 +664,23 @@ Scenario: _041327 check Sales return movements by the Register  "R2001 Sales" (w
 		And I select "R2001 Sales" exact value from "Register" drop-down list
 		And I click "Generate report" button
 		Then "ResultTable" spreadsheet document is equal
-			| 'Sales return 102 dated 12.03.2021 08:50:27' | ''                    | ''          | ''        | ''           | ''              | ''             | ''                     | ''                             | ''         | ''                                           | ''         | ''                                     |
-			| 'Document registrations records'             | ''                    | ''          | ''        | ''           | ''              | ''             | ''                     | ''                             | ''         | ''                                           | ''         | ''                                     |
-			| 'Register  "R2001 Sales"'                    | ''                    | ''          | ''        | ''           | ''              | ''             | ''                     | ''                             | ''         | ''                                           | ''         | ''                                     |
-			| ''                                           | 'Period'              | 'Resources' | ''        | ''           | ''              | 'Dimensions'   | ''                     | ''                             | ''         | ''                                           | ''         | ''                                     |
-			| ''                                           | ''                    | 'Quantity'  | 'Amount'  | 'Net amount' | 'Offers amount' | 'Company'      | 'Branch'               | 'Multi currency movement type' | 'Currency' | 'Invoice'                                    | 'Item key' | 'Row key'                              |
-			| ''                                           | '12.03.2021 08:50:27' | '-2'        | '-665'    | '-563,56'    | '-35'           | 'Main Company' | 'Logistics department' | 'Local currency'               | 'TRY'      | 'Sales return 102 dated 12.03.2021 08:50:27' | '36/Red'   | '512b5626-66dc-4fc0-b96e-359108f4d7b7' |
-			| ''                                           | '12.03.2021 08:50:27' | '-2'        | '-665'    | '-563,56'    | '-35'           | 'Main Company' | 'Logistics department' | 'TRY'                          | 'TRY'      | 'Sales return 102 dated 12.03.2021 08:50:27' | '36/Red'   | '512b5626-66dc-4fc0-b96e-359108f4d7b7' |
-			| ''                                           | '12.03.2021 08:50:27' | '-2'        | '-665'    | '-563,56'    | '-35'           | 'Main Company' | 'Logistics department' | 'en description is empty'      | 'TRY'      | 'Sales return 102 dated 12.03.2021 08:50:27' | '36/Red'   | '512b5626-66dc-4fc0-b96e-359108f4d7b7' |
-			| ''                                           | '12.03.2021 08:50:27' | '-2'        | '-113,85' | '-96,48'     | '-5,99'         | 'Main Company' | 'Logistics department' | 'Reporting currency'           | 'USD'      | 'Sales return 102 dated 12.03.2021 08:50:27' | '36/Red'   | '512b5626-66dc-4fc0-b96e-359108f4d7b7' |
-			| ''                                           | '12.03.2021 08:50:27' | '-1'        | '-494'    | '-418,64'    | '-26'           | 'Main Company' | 'Logistics department' | 'Local currency'               | 'TRY'      | 'Sales return 102 dated 12.03.2021 08:50:27' | 'XS/Blue'  | 'c77b27bd-8d19-4d55-b590-bd5ecc463efd' |
-			| ''                                           | '12.03.2021 08:50:27' | '-1'        | '-494'    | '-418,64'    | '-26'           | 'Main Company' | 'Logistics department' | 'TRY'                          | 'TRY'      | 'Sales return 102 dated 12.03.2021 08:50:27' | 'XS/Blue'  | 'c77b27bd-8d19-4d55-b590-bd5ecc463efd' |
-			| ''                                           | '12.03.2021 08:50:27' | '-1'        | '-494'    | '-418,64'    | '-26'           | 'Main Company' | 'Logistics department' | 'en description is empty'      | 'TRY'      | 'Sales return 102 dated 12.03.2021 08:50:27' | 'XS/Blue'  | 'c77b27bd-8d19-4d55-b590-bd5ecc463efd' |
-			| ''                                           | '12.03.2021 08:50:27' | '-1'        | '-95'     | '-80,51'     | '-5'            | 'Main Company' | 'Logistics department' | 'Local currency'               | 'TRY'      | 'Sales return 102 dated 12.03.2021 08:50:27' | 'Interner' | 'af263f16-367e-4b29-ab41-7bc578d06d4b' |
-			| ''                                           | '12.03.2021 08:50:27' | '-1'        | '-95'     | '-80,51'     | '-5'            | 'Main Company' | 'Logistics department' | 'TRY'                          | 'TRY'      | 'Sales return 102 dated 12.03.2021 08:50:27' | 'Interner' | 'af263f16-367e-4b29-ab41-7bc578d06d4b' |
-			| ''                                           | '12.03.2021 08:50:27' | '-1'        | '-95'     | '-80,51'     | '-5'            | 'Main Company' | 'Logistics department' | 'en description is empty'      | 'TRY'      | 'Sales return 102 dated 12.03.2021 08:50:27' | 'Interner' | 'af263f16-367e-4b29-ab41-7bc578d06d4b' |
-			| ''                                           | '12.03.2021 08:50:27' | '-1'        | '-84,57'  | '-71,67'     | '-4,45'         | 'Main Company' | 'Logistics department' | 'Reporting currency'           | 'USD'      | 'Sales return 102 dated 12.03.2021 08:50:27' | 'XS/Blue'  | 'c77b27bd-8d19-4d55-b590-bd5ecc463efd' |
-			| ''                                           | '12.03.2021 08:50:27' | '-1'        | '-16,26'  | '-13,78'     | '-0,86'         | 'Main Company' | 'Logistics department' | 'Reporting currency'           | 'USD'      | 'Sales return 102 dated 12.03.2021 08:50:27' | 'Interner' | 'af263f16-367e-4b29-ab41-7bc578d06d4b' |		
+			| 'Sales return 102 dated 12.03.2021 08:50:27' | ''                    | ''          | ''        | ''           | ''              | ''             | ''                     | ''                             | ''         | ''                                           | ''         | ''                                     | ''             |
+			| 'Document registrations records'             | ''                    | ''          | ''        | ''           | ''              | ''             | ''                     | ''                             | ''         | ''                                           | ''         | ''                                     | ''             |
+			| 'Register  "R2001 Sales"'                    | ''                    | ''          | ''        | ''           | ''              | ''             | ''                     | ''                             | ''         | ''                                           | ''         | ''                                     | ''             |
+			| ''                                           | 'Period'              | 'Resources' | ''        | ''           | ''              | 'Dimensions'   | ''                     | ''                             | ''         | ''                                           | ''         | ''                                     | ''             |
+			| ''                                           | ''                    | 'Quantity'  | 'Amount'  | 'Net amount' | 'Offers amount' | 'Company'      | 'Branch'               | 'Multi currency movement type' | 'Currency' | 'Invoice'                                    | 'Item key' | 'Row key'                              | 'Sales person' |
+			| ''                                           | '12.03.2021 08:50:27' | '-2'        | '-665'    | '-563,56'    | '-35'           | 'Main Company' | 'Logistics department' | 'Local currency'               | 'TRY'      | 'Sales return 102 dated 12.03.2021 08:50:27' | '36/Red'   | '512b5626-66dc-4fc0-b96e-359108f4d7b7' | ''             |
+			| ''                                           | '12.03.2021 08:50:27' | '-2'        | '-665'    | '-563,56'    | '-35'           | 'Main Company' | 'Logistics department' | 'TRY'                          | 'TRY'      | 'Sales return 102 dated 12.03.2021 08:50:27' | '36/Red'   | '512b5626-66dc-4fc0-b96e-359108f4d7b7' | ''             |
+			| ''                                           | '12.03.2021 08:50:27' | '-2'        | '-665'    | '-563,56'    | '-35'           | 'Main Company' | 'Logistics department' | 'en description is empty'      | 'TRY'      | 'Sales return 102 dated 12.03.2021 08:50:27' | '36/Red'   | '512b5626-66dc-4fc0-b96e-359108f4d7b7' | ''             |
+			| ''                                           | '12.03.2021 08:50:27' | '-2'        | '-113,85' | '-96,48'     | '-5,99'         | 'Main Company' | 'Logistics department' | 'Reporting currency'           | 'USD'      | 'Sales return 102 dated 12.03.2021 08:50:27' | '36/Red'   | '512b5626-66dc-4fc0-b96e-359108f4d7b7' | ''             |
+			| ''                                           | '12.03.2021 08:50:27' | '-1'        | '-494'    | '-418,64'    | '-26'           | 'Main Company' | 'Logistics department' | 'Local currency'               | 'TRY'      | 'Sales return 102 dated 12.03.2021 08:50:27' | 'XS/Blue'  | 'c77b27bd-8d19-4d55-b590-bd5ecc463efd' | ''             |
+			| ''                                           | '12.03.2021 08:50:27' | '-1'        | '-494'    | '-418,64'    | '-26'           | 'Main Company' | 'Logistics department' | 'TRY'                          | 'TRY'      | 'Sales return 102 dated 12.03.2021 08:50:27' | 'XS/Blue'  | 'c77b27bd-8d19-4d55-b590-bd5ecc463efd' | ''             |
+			| ''                                           | '12.03.2021 08:50:27' | '-1'        | '-494'    | '-418,64'    | '-26'           | 'Main Company' | 'Logistics department' | 'en description is empty'      | 'TRY'      | 'Sales return 102 dated 12.03.2021 08:50:27' | 'XS/Blue'  | 'c77b27bd-8d19-4d55-b590-bd5ecc463efd' | ''             |
+			| ''                                           | '12.03.2021 08:50:27' | '-1'        | '-95'     | '-80,51'     | '-5'            | 'Main Company' | 'Logistics department' | 'Local currency'               | 'TRY'      | 'Sales return 102 dated 12.03.2021 08:50:27' | 'Interner' | 'af263f16-367e-4b29-ab41-7bc578d06d4b' | ''             |
+			| ''                                           | '12.03.2021 08:50:27' | '-1'        | '-95'     | '-80,51'     | '-5'            | 'Main Company' | 'Logistics department' | 'TRY'                          | 'TRY'      | 'Sales return 102 dated 12.03.2021 08:50:27' | 'Interner' | 'af263f16-367e-4b29-ab41-7bc578d06d4b' | ''             |
+			| ''                                           | '12.03.2021 08:50:27' | '-1'        | '-95'     | '-80,51'     | '-5'            | 'Main Company' | 'Logistics department' | 'en description is empty'      | 'TRY'      | 'Sales return 102 dated 12.03.2021 08:50:27' | 'Interner' | 'af263f16-367e-4b29-ab41-7bc578d06d4b' | ''             |
+			| ''                                           | '12.03.2021 08:50:27' | '-1'        | '-84,57'  | '-71,67'     | '-4,45'         | 'Main Company' | 'Logistics department' | 'Reporting currency'           | 'USD'      | 'Sales return 102 dated 12.03.2021 08:50:27' | 'XS/Blue'  | 'c77b27bd-8d19-4d55-b590-bd5ecc463efd' | ''             |
+			| ''                                           | '12.03.2021 08:50:27' | '-1'        | '-16,26'  | '-13,78'     | '-0,86'         | 'Main Company' | 'Logistics department' | 'Reporting currency'           | 'USD'      | 'Sales return 102 dated 12.03.2021 08:50:27' | 'Interner' | 'af263f16-367e-4b29-ab41-7bc578d06d4b' | ''             |
 	And I close all client application windows
 
 

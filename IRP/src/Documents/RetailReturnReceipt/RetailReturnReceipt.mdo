@@ -113,7 +113,7 @@
   <registerRecords>AccumulationRegister.R4010B_ActualStocks</registerRecords>
   <registerRecords>AccumulationRegister.R2002T_SalesReturns</registerRecords>
   <registerRecords>AccumulationRegister.R2050T_RetailSales</registerRecords>
-  <registerRecords>AccumulationRegister.R3050T_RetailCash</registerRecords>
+  <registerRecords>AccumulationRegister.R3050T_PosCashBalances</registerRecords>
   <registerRecords>AccumulationRegister.R2001T_Sales</registerRecords>
   <registerRecords>AccumulationRegister.R2021B_CustomersTransactions</registerRecords>
   <registerRecords>AccumulationRegister.R4011B_FreeStocks</registerRecords>
@@ -469,7 +469,7 @@
       <name>Quantity</name>
       <synonym>
         <key>en</key>
-        <value>Q</value>
+        <value>Quantity</value>
       </synonym>
       <type>
         <types>DefinedType.typeQuantity</types>
@@ -655,6 +655,34 @@
       </synonym>
       <type>
         <types>DefinedType.typeAmount</types>
+      </type>
+      <minValue xsi:type="core:UndefinedValue"/>
+      <maxValue xsi:type="core:UndefinedValue"/>
+      <dataHistory>Use</dataHistory>
+      <fullTextSearch>Use</fullTextSearch>
+    </attributes>
+    <attributes uuid="f5115f41-927b-4360-960c-308b6bf3c53e">
+      <name>UseSerialLotNumber</name>
+      <synonym>
+        <key>en</key>
+        <value>Use serial lot number</value>
+      </synonym>
+      <type>
+        <types>Boolean</types>
+      </type>
+      <minValue xsi:type="core:UndefinedValue"/>
+      <maxValue xsi:type="core:UndefinedValue"/>
+      <dataHistory>Use</dataHistory>
+      <fullTextSearch>Use</fullTextSearch>
+    </attributes>
+    <attributes uuid="0f8a6a08-98d3-4fc7-8cac-95643d2c6fee">
+      <name>IsService</name>
+      <synonym>
+        <key>en</key>
+        <value>Is service</value>
+      </synonym>
+      <type>
+        <types>Boolean</types>
       </type>
       <minValue xsi:type="core:UndefinedValue"/>
       <maxValue xsi:type="core:UndefinedValue"/>
@@ -1225,7 +1253,7 @@
       <name>Quantity</name>
       <synonym>
         <key>en</key>
-        <value>Q</value>
+        <value>Quantity</value>
       </synonym>
       <type>
         <types>DefinedType.typeQuantity</types>

@@ -1,10 +1,18 @@
 
 Procedure OnCreateAtServer(Object, Form, TableNames) Export
+	ArrayOfNewAttribute = New Array();
 	If Not CommonFunctionsServer.FormHaveAttribute(Form, "CacheBeforeChange") Then
-		ArrayOfNewAttribute = New Array();
-		ArrayOfNewAttribute.Add(New FormAttribute("CacheBeforeChange", New TypeDescription("String")));
+		ArrayOfNewAttribute.Add(New FormAttribute("CacheBeforeChange", New TypeDescription()));
+	EndIf;
+	If Not CommonFunctionsServer.FormHaveAttribute(Form, "IsCopyingInteractive") Then
+		ArrayOfNewAttribute.Add(New FormAttribute("IsCopyingInteractive", New TypeDescription("Boolean")));
+	EndIf;
+	
+	If ArrayOfNewAttribute.Count() Then
 		Form.ChangeAttributes(ArrayOfNewAttribute);
 	EndIf;
+	// Copying document on client
+	Form.IsCopyingInteractive =  Form.Parameters.Property("CopyingValue") And ValueIsFilled(Form.Parameters.CopyingValue);
 	
 	For Each TableName In StrSplit(TableNames, ",") Do
 		FormParameters = ControllerClientServer_V2.GetFormParameters(Form);
@@ -48,7 +56,7 @@ Function GetObjectMetadataInfo(Val Object, ArrayOfTableNames) Export
 		EndDo;
 		Tables.Insert(TableName, New Structure ("Columns", StrConcat(ArrayOfColumns, ",")));
 	EndDo;
-	Result.Insert("Tables",Tables);
+	Result.Insert("Tables", Tables);
 	
 	AllDepTables = New Array();
 	AllDepTables.Add("SpecialOffers");
@@ -69,3 +77,60 @@ Function GetObjectMetadataInfo(Val Object, ArrayOfTableNames) Export
 	
 	Return Result;
 EndFunction
+
+Procedure AddNewRowAtServer(TableName, Parameters, OnAddViewNotify, FillingValues) Export
+	ControllerClientServer_V2.AddNewRow(TableName, Parameters, OnAddViewNotify);
+	
+	If FillingValues = Undefined Then
+		Return;
+	EndIf;
+	Row = Parameters.Rows[0];
+	
+	
+	ItemIsPresent     = CommonFunctionsClientServer.ObjectHasProperty(Row, "Item");
+	ItemKeyIsPresent  = CommonFunctionsClientServer.ObjectHasProperty(Row, "ItemKey");
+	UnitIsPresent     = CommonFunctionsClientServer.ObjectHasProperty(Row, "Unit");
+	QuantityIsPresent = CommonFunctionsClientServer.ObjectHasProperty(Row, "Quantity");
+	PriceIsPresent    = CommonFunctionsClientServer.ObjectHasProperty(Row, "Price");
+	PhysCountIsPresent  = CommonFunctionsClientServer.ObjectHasProperty(Row, "PhysCount");
+	SerialLotNumberIsPresent = CommonFunctionsClientServer.ObjectHasProperty(Row, "SerialLotNumber");
+	
+	If FillingValues.Property("Item") And ItemIsPresent Then
+		ControllerClientServer_V2.SetItemListItem(Parameters, PrepareValue(FillingValues.Item, Row.Key));
+	EndIf;
+	
+	If FillingValues.Property("ItemKey") And ItemKeyIsPresent Then
+		ControllerClientServer_V2.SetItemListItemKey(Parameters, PrepareValue(FillingValues.ItemKey, Row.Key));
+	EndIf;
+	
+	If FillingValues.Property("Unit") And UnitIsPresent Then
+		ControllerClientServer_V2.SetItemListUnit(Parameters, PrepareValue(FillingValues.Unit, Row.Key));
+	EndIf;
+	
+	If FillingValues.Property("Quantity") And QuantityIsPresent Then
+		ControllerClientServer_V2.SetItemListQuantity(Parameters, PrepareValue(FillingValues.Quantity, Row.Key));
+	EndIf;
+	
+	If FillingValues.Property("Quantity") And PhysCountIsPresent Then
+		ControllerClientServer_V2.SetItemListPhysCount(Parameters, PrepareValue(FillingValues.Quantity, Row.Key));
+	EndIf;
+	
+	If FillingValues.Property("Price") And PriceIsPresent Then
+		ControllerClientServer_V2.SetItemListPrice(Parameters, PrepareValue(FillingValues.Price, Row.Key));
+	EndIf;
+	
+	If FillingValues.Property("SerialLotNumber") And SerialLotNumberIsPresent Then
+		ControllerClientServer_V2.SetItemListSerialLotNumber(Parameters, PrepareValue(FillingValues.SerialLotNumber, Row.Key));
+	EndIf;
+		
+EndProcedure
+
+Function PrepareValue(Value, Key)
+	Result = New Array();
+	Data = New Structure();
+	Data.Insert("Value", Value);
+	Data.Insert("Options", New Structure("Key", Key));
+	Result.Add(Data);
+	Return Result;
+EndFunction
+

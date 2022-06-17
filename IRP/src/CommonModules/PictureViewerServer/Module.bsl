@@ -15,6 +15,18 @@ Function PictureURLStructure()
 	Return Structure;
 EndFunction
 
+// Get picture URL.
+// 
+// Parameters:
+//  RefStructure - Structure
+// 
+// Returns:
+//  Structure - Get picture URL:
+// * PictureRef - String -
+// * PictureURL - String -
+// * IntegrationSettings - String -
+// * isLocalPictureURL - Boolean -
+// * ProcessingModule - String -
 Function GetPictureURL(RefStructure) Export
 	Result = PictureURLStructure();
 
@@ -104,6 +116,22 @@ Function GetFileRefsByFileIDs(FileIDs) Export
 	Return Query.Execute().Unload().UnloadColumn("Ref");
 EndFunction
 
+// Get pictures by object ref.
+// 
+// Parameters:
+//  OwnerRef - CatalogRef.Items, CatalogRef.ItemKeys - Owner ref
+//  DirectLink - Boolean - Direct link
+//  FileRef - Undefined - File ref
+// 
+// Returns:
+//  ValueTable - Get pictures by object ref:
+//  * Ref - CatalogRef.Files
+//  * FileID - String
+//  * isFilledVolume - Boolean
+//  * GETIntegrationSettings - CatalogRef.IntegrationSettings
+//  * isLocalPictureURL - Boolean
+//  * URI - String
+//  * Priority - Number
 Function GetPicturesByObjectRef(OwnerRef, DirectLink = False, FileRef = Undefined) Export
 	Query = New Query();
 	If Not DirectLink And TypeOf(OwnerRef) = Type("CatalogRef.Items") Then
@@ -287,7 +315,9 @@ Function ExtensionCall_GetVolumeURLByIntegrationSettings(FullURL, IntegrationSet
 EndFunction
 
 Function isImage(Extensions) Export
+// BSLLS:Typo-off
 	ImgList = ".ase,.art,.bmp,.blp,.cd5,.cit,.cpt,.cr2,.cut,.dds,.dib,.djvu,.egt,.exif,.gif,.gpl,.grf,.icns,.ico,.iff,.jng,.jpeg,.jpg,.jfif,.jp2,.jps,.lbm,.max,.miff,.mng,.msp,.nitf,.ota,.pbm,.pc1,.pc2,.pc3,.pcf,.pcx,.pdn,.pgm,.PI1,.PI2,.PI3,.pict,.pct,.pnm,.pns,.ppm,.psb,.psd,.pdd,.psp,.px,.pxm,.pxr,.qfx,.raw,.rle,.sct,.sgi,.rgb,.int,.bw,.tga,.tiff,.tif,.vtf,.xbm,.xcf,.xpm,.3dv,.amf,.ai,.awg,.cgm,.cdr,.cmx,.dxf,.e2d,.egt,.eps,.fs,.gbr,.odg,.svg,.stl,.vrml,.x3d,.sxd,.v2d,.vnd,.wmf,.emf,.art,.xar,.png,.webp,.jxr,.hdp,.wdp,.cur,.ecw,.iff,.lbm,.liff,.nrrd,.pam,.pcx,.pgf,.sgi,.rgb,.rgba,.bw,.int,.inta,.sid,.ras,.sun,.tga";
+// BSLLS:Typo-on
 	Return Not StrSplit(ImgList, ",").Find(Lower(Extensions)) = Undefined;
 EndFunction
 
@@ -464,45 +494,63 @@ Function GetFileInfo(FileRef) Export
 	Return FileInfo;
 EndFunction
 
+// Pictures info for slider.
+// 
+// Parameters:
+//  ItemRef - CatalogRef.Items, CatalogRef.ItemKeys - Item ref
+//  FileRef - Undefined - File ref
+//  UseFullSizePhoto - Boolean - Use full size photo
+// 
+// Returns:
+//  Array of See GetPictureSettingsStructure
 Function PicturesInfoForSlider(ItemRef, FileRef = Undefined, UseFullSizePhoto = False) Export
 
 	Pictures = PictureViewerServer.GetPicturesByObjectRef(ItemRef, , FileRef);
 
-	If UseFullSizePhoto Then
-		PicArray = New Array();
-		For Each Picture In Pictures Do
-			PictureStructure = New Structure("Src, SrcBD, ID, PictureURLStructure, Preview, Text");
-			PicInfo = GetPictureURL(Picture);
-			PictureStructure.PictureURLStructure = PicInfo;
-			PictureStructure.Src = PicInfo.PictureURL;
-			If PicInfo.isLocalPictureURL Then
-				Try
-					PictureStructure.SrcBD = New BinaryData(PictureStructure.Src);
-				Except
-					EmptyPic = New Picture();
-					PictureStructure.SrcBD = EmptyPic.GetBinaryData();
-				EndTry;
-			EndIf;
-			PictureStructure.Text = Picture.Ref.Description;
-			PictureStructure.ID = Picture.FileID;
-			PictureStructure.Preview = GetURL(Picture.Ref, "Preview");
-			PicArray.Add(PictureStructure);
-		EndDo;
-	Else
-		PicArray = New Array();
-		For Each Picture In Pictures Do
-			PictureStructure = New Structure("Src, SrcBD, ID, PictureURLStructure, Preview, Text");
-			PictureStructure.Src = GetURL(Picture.Ref, "Preview");
-			PictureStructure.Text = Picture.Ref.Description;
-			PictureStructure.ID = Picture.FileID;
-			PictureStructure.Preview = GetURL(Picture.Ref, "Preview");
-			PicArray.Add(PictureStructure);
-		EndDo;
-		Pictures = New Structure("Pictures", PicArray);
-		PicArray = CommonFunctionsServer.SerializeJSON(Pictures);
-	EndIf;
-	Return PicArray; // JSON, Array
+	PicArray = New Array();
+	For Each Picture In Pictures Do
+		PictureStructure = GetPictureSettingsStructure();
+		PicInfo = GetPictureURL(Picture);
+		PictureStructure.FileRef = Picture.Ref;
+		PictureStructure.PictureURLStructure = PicInfo;
+		PictureStructure.Text = Picture.Ref.Description;
+		PictureStructure.ID = Picture.FileID;
 
+		If UseFullSizePhoto Then			
+			If PicInfo.isLocalPictureURL Then
+				PictureStructure.Src = New BinaryData(PicInfo.PictureURL);
+			Else
+				PictureStructure.Src = PicInfo.PictureURL;	
+			EndIf;
+		EndIf;
+		
+		PictureStructure.Preview = GetURL(Picture.Ref, "Preview");
+
+		PicArray.Add(PictureStructure);
+	EndDo;
+Return PicArray; 
+
+EndFunction
+
+// Get picture settings structure.
+// 
+// Returns:
+//  Structure - Get picture settings structure:
+// * Src - BinaryData, Undefined, String -
+// * Preview - BinaryData, Undefined -
+// * FileRef - CatalogRef.Files -
+// * ID - String -
+// * PictureURLStructure - Structure -
+// * Text - String -
+Function GetPictureSettingsStructure() Export
+	Settings = New Structure();
+	Settings.Insert("Src", Undefined);
+	Settings.Insert("Preview", Undefined);
+	Settings.Insert("FileRef", Catalogs.Files.EmptyRef());
+	Settings.Insert("ID", "");
+	Settings.Insert("PictureURLStructure", New Structure);
+	Settings.Insert("Text", "");
+	Return Settings;
 EndFunction
 
 Function ScalePicture(BinaryData, SizePx = Undefined) Export

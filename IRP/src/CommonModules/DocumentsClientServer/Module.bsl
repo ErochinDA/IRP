@@ -16,14 +16,14 @@ Function GetGroupItemsArray(Object, Form)
 	ItemStructure.Insert("Value", ?(Not ValueIsFilled(Object.Number), "", String(Object.Number)));
 	ItemsArray.Add(ItemStructure);
 
-	For Each Atr In Form.GroupItems Do
+	For Each Attr In Form.GroupItems Do
 		// hidden attributes will Not be shown
-		If Form.Items.Find(Atr.Value) <> Undefined And Not Form.Items[Atr.Value].Visible Then
+		If Form.Items.Find(Attr.Value) <> Undefined And Not Form.Items[Attr.Value].Visible Then
 			Continue;
 		EndIf;
 		ItemStructure = New Structure();
-		ItemStructure.Insert("Title", Atr.Presentation);
-		ItemStructure.Insert("Value", ?(Not ValueIsFilled(Object[Atr.Value]), "", String(Object[Atr.Value])));
+		ItemStructure.Insert("Title", Attr.Presentation);
+		ItemStructure.Insert("Value", ?(Not ValueIsFilled(Object[Attr.Value]), "", String(Object[Attr.Value])));
 		ItemsArray.Add(ItemStructure);
 	EndDo;
 
@@ -53,25 +53,25 @@ Procedure ChangeTitleGroupTitle(Object, Form, Settings = Undefined) Export
 	TitleFont = New Font(Form.Items.DecorationGroupTitleCollapsedLabel.Font, , , True);
 	TitleTextColor = WebColors.Gray;
 	TitleBackColor = Form.Items.DecorationGroupTitleCollapsedLabel.BackColor;
-	If TitleBackColor = New Color()Then
+	If TitleBackColor = New Color() Then
 		TitleBackColor = WebColors.White;
 	EndIf;
 
 	ValueFont = New Font(Form.Items.DecorationGroupTitleCollapsedLabel.Font);
 	ValueTextColor = New Color(28, 85, 174); // Standard hyperlink color (28, 85, 174)
 	ValueBackColor = Form.Items.DecorationGroupTitleCollapsedLabel.BackColor;
-	If ValueBackColor = New Color()Then
+	If ValueBackColor = New Color() Then
 		ValueBackColor = WebColors.White;
 	EndIf;
 
 	SeparatorText = "   ";
 	SeparatorFont = New Font(Form.Items.DecorationGroupTitleCollapsedLabel.Font);
 	SeparatorTextColor = Form.Items.DecorationGroupTitleCollapsedLabel.BackColor;
-	If SeparatorTextColor = New Color()Then
+	If SeparatorTextColor = New Color() Then
 		SeparatorTextColor = WebColors.White;
 	EndIf;
 	SeparatorBackColor = Form.Items.DecorationGroupTitleCollapsedLabel.BackColor;
-	If SeparatorBackColor = New Color()Then
+	If SeparatorBackColor = New Color() Then
 		SeparatorBackColor = WebColors.White;
 	EndIf;
 
@@ -99,25 +99,25 @@ Procedure ChangeTitleGroupTitle(Object, Form, Settings = Undefined) Export
 	TitleFont = New Font(Form.Items.DecorationGroupTitleUncollapsedLabel.Font, , , True);
 	TitleTextColor = WebColors.LightGray;
 	TitleBackColor = Form.Items.DecorationGroupTitleUncollapsedLabel.BackColor;
-	If TitleBackColor = New Color()Then
+	If TitleBackColor = New Color() Then
 		TitleBackColor = WebColors.White;
 	EndIf;
 
 	ValueFont = New Font(Form.Items.DecorationGroupTitleUncollapsedLabel.Font);
 	ValueTextColor = New Color(111, 168, 255);
 	ValueBackColor = Form.Items.DecorationGroupTitleUncollapsedLabel.BackColor;
-	If ValueBackColor = New Color()Then
+	If ValueBackColor = New Color() Then
 		ValueBackColor = WebColors.White;
 	EndIf;
 
 	SeparatorText = "   ";
 	SeparatorFont = New Font(Form.Items.DecorationGroupTitleUncollapsedLabel.Font);
 	SeparatorTextColor = Form.Items.DecorationGroupTitleUncollapsedLabel.BackColor;
-	If SeparatorTextColor = New Color()Then
+	If SeparatorTextColor = New Color() Then
 		SeparatorTextColor = WebColors.White;
 	EndIf;
 	SeparatorBackColor = Form.Items.DecorationGroupTitleUncollapsedLabel.BackColor;
-	If SeparatorBackColor = New Color()Then
+	If SeparatorBackColor = New Color() Then
 		SeparatorBackColor = WebColors.White;
 	EndIf;
 
@@ -163,91 +163,6 @@ EndProcedure
 
 #EndRegion
 
-Procedure SetVisibilityItemsByArray(Items, Val ArrayAll, Val ArrayVisible) Export
-	If TypeOf(ArrayVisible) <> Type("Array") Then
-		ArrayVisible = New Array();
-	EndIf;
-	For Each ArrayElement In ArrayAll Do
-		ItemName = StrReplace(ArrayElement, ".", "");
-		Visibility = (ArrayVisible.Find(ArrayElement) <> Undefined);
-		If Items.Find(ItemName) <> Undefined And Items[ItemName].Visible <> Visibility Then
-			Items[ItemName].Visible = Visibility;
-		EndIf;
-	EndDo;
-EndProcedure
-
-Procedure CleanDataByArray(Object, Val ArrayAll, Val ArrayVisible) Export
-	If TypeOf(ArrayVisible) <> Type("Array") Then
-		ArrayVisible = New Array();
-	EndIf;
-	For Each ArrayElement In ArrayAll Do
-		If Not ArrayVisible.Find(ArrayElement) = Undefined Then
-			Continue;
-		EndIf;
-
-		If StrFind(ArrayElement, ".") Then
-			TableName = Left(ArrayElement, StrFind(ArrayElement, ".") - 1);
-			ItemName = StrReplace(ArrayElement, TableName + ".", "");
-			For Each Row In Object[TableName] Do
-				If CommonFunctionsClientServer.ObjectHasProperty(Row, ItemName) Then
-					Row[ItemName] = Undefined;
-				EndIf;
-			EndDo;
-		Else
-			If CommonFunctionsClientServer.ObjectHasProperty(Object, ArrayElement) Then
-				Object[ArrayElement] = Undefined;
-			EndIf;
-		EndIf;
-	EndDo;
-EndProcedure
-
-#Region Stores
-Procedure FillStores(ObjectData, Form) Export
-
-#If AtServer Then
-	If Not ValueIsFilled(Form.CurrentStore) Then
-		Form.CurrentStore = DocumentsServer.GetCurrentStore(ObjectData);
-	EndIf;
-#EndIf
-
-	StoreArray = New Array();
-	For Each Row In ObjectData.ItemList Do
-		If ValueIsFilled(Row.Store) Then
-			If StoreArray.Find(Row.Store) = Undefined Then
-				StoreArray.Add(Row.Store);
-			EndIf;
-		EndIf;
-	EndDo;
-
-	If StoreArray.Count() = 0 Then
-		Form.Items.Store.InputHint = "";
-		Form.Store = Form.CurrentStore;
-	ElsIf StoreArray.Count() = 1 Then
-		Form.Items.Store.InputHint = "";
-		Form.Store = StoreArray[0];
-		If Not ValueIsFilled(Form.CurrentStore) Then
-			Form.CurrentStore = Form.Store;
-		EndIf;
-	Else
-		Form.Store = PredefinedValue("Catalog.Stores.EmptyRef");
-		Form.Items.Store.InputHint = StrConcat(StoreArray, "; ");
-	EndIf;
-	Form.StoreBeforeChange = Form.Store;
-
-EndProcedure
-
-Function GetStructureFillStores() Export
-
-	ObjectData = New Structure();
-	ObjectData.Insert("ItemList");
-	ObjectData.Insert("Agreement");
-	ObjectData.Insert("Ref");
-
-	Return ObjectData;
-EndFunction
-
-#EndRegion
-
 #Region Common
 
 Function CreateFilterItem(FieldName, Value = Undefined, ComparisonTypeValue = Undefined,
@@ -262,20 +177,6 @@ EndFunction
 
 #EndRegion
 
-#Region Common
-Procedure FillDefinedData(Object, Form) Export
-	IsCopy = Form.Parameters.Property("CopyingValue") And ValueIsFilled(Form.Parameters.CopyingValue);
-	IsBasedOn = Form.Parameters.Property("BasedOn") Or (Form.Parameters.Property("FillingValues")
-		And Form.Parameters.FillingValues.Property("BasedOn"));
-
-	If Not IsCopy And Not IsBasedOn Then
-		AgreementInfo = CatAgreementsServer.GetAgreementInfo(Object.Agreement);
-		Object.PriceIncludeTax 	= AgreementInfo.PriceIncludeTax;
-		Object.Currency 		= AgreementInfo.Currency;
-	EndIf;
-EndProcedure
-#EndRegion
-
 Procedure SetReadOnlyPaymentTermsCanBePaid(Object, Form) Export
 	CalculationTypes_Prepaid = PredefinedValue("Enum.CalculationTypes.Prepaid");
 	For Each Row In Form.Object.PaymentTerms Do
@@ -287,6 +188,7 @@ Procedure SetReadOnlyPaymentTermsCanBePaid(Object, Form) Export
 		EndIf;
 	EndDo;
 EndProcedure
+
 
 Function FindRowInArrayOfStructures(ArrayOfStructures, KeyNames, 
                                     Value1 = Undefined, 

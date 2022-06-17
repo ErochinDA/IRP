@@ -65,14 +65,23 @@ Scenario: _2066001 preparation (locking linked strings)
 	When Create PO,PI,GR,PRO,PR (locking linked strings)
 	And I execute 1C:Enterprise script at server
 		| "Documents.PurchaseOrder.FindByNumber(32).GetObject().Write(DocumentWriteMode.Posting);" |
+	And I execute 1C:Enterprise script at server
 		| "Documents.PurchaseInvoice.FindByNumber(32).GetObject().Write(DocumentWriteMode.Posting);" |
+	And I execute 1C:Enterprise script at server
 		| "Documents.PurchaseOrder.FindByNumber(35).GetObject().Write(DocumentWriteMode.Posting);" |
+	And I execute 1C:Enterprise script at server
 		| "Documents.PurchaseInvoice.FindByNumber(35).GetObject().Write(DocumentWriteMode.Posting);" |
+	And I execute 1C:Enterprise script at server
 		| "Documents.PurchaseReturnOrder.FindByNumber(32).GetObject().Write(DocumentWriteMode.Posting);" |
+	And I execute 1C:Enterprise script at server
 		| "Documents.PurchaseReturn.FindByNumber(32).GetObject().Write(DocumentWriteMode.Posting);" |
+	And I execute 1C:Enterprise script at server
 		| "Documents.GoodsReceipt.FindByNumber(35).GetObject().Write(DocumentWriteMode.Posting);" |
+	And I execute 1C:Enterprise script at server
 		| "Documents.GoodsReceipt.FindByNumber(36).GetObject().Write(DocumentWriteMode.Posting);" |
+	And I execute 1C:Enterprise script at server
 		| "Documents.PurchaseInvoice.FindByNumber(36).GetObject().Write(DocumentWriteMode.Posting);" |
+	And I execute 1C:Enterprise script at server
 		| "Documents.ShipmentConfirmation.FindByNumber(32).GetObject().Write(DocumentWriteMode.Posting);" |
 		
 		
@@ -639,11 +648,11 @@ Scenario: _2066010 change quantity in the linked string in the PO (one session)
 		And I select current line in "List" table
 	* Change quantity (less then PI)
 		And I go to line in "ItemList" table
-			| 'Item'  | 'Item key' | 'Q'      |
+			| 'Item'  | 'Item key' | 'Quantity'      |
 			| 'Shirt' | '36/Red'   | '11,000' |
-		And I activate "Q" field in "ItemList" table
+		And I activate "Quantity" field in "ItemList" table
 		And I select current line in "ItemList" table
-		And I input "9,000" text in "Q" field of "ItemList" table
+		And I input "9,000" text in "Quantity" field of "ItemList" table
 		And I finish line editing in "ItemList" table
 		And I click "Post" button
 		Then "1C:Enterprise" window is opened
@@ -652,11 +661,11 @@ Scenario: _2066010 change quantity in the linked string in the PO (one session)
 			|'Line No. [3] [Shirt 36/Red] RowID movements remaining: 10 . Required: 9 . Lacking: 1 .'|
 	* Change quantity (more then PI)
 		And I go to line in "ItemList" table
-			| 'Item'  | 'Item key' | 'Q'      |
+			| 'Item'  | 'Item key' | 'Quantity'      |
 			| 'Shirt' | '36/Red'   | '9,000' |
-		And I activate "Q" field in "ItemList" table
+		And I activate "Quantity" field in "ItemList" table
 		And I select current line in "ItemList" table
-		And I input "11,000" text in "Q" field of "ItemList" table
+		And I input "11,000" text in "Quantity" field of "ItemList" table
 		And I finish line editing in "ItemList" table
 		And I click "Post and close" button
 		Then user message window does not contain messages
@@ -673,11 +682,11 @@ Scenario: _2066011 change quantity in the linked string in the PI, GR after PI, 
 		And I select current line in "List" table
 	* Change quantity (less then GR, GR exist)
 		And I go to line in "ItemList" table
-			| 'Item'  | 'Item key' | 'Q'      |
+			| 'Item'  | 'Item key' | 'Quantity'      |
 			| 'Boots' | '37/18SD'  | '2,000' |
-		And I activate "Q" field in "ItemList" table
+		And I activate "Quantity" field in "ItemList" table
 		And I select current line in "ItemList" table
-		And I input "1,000" text in "Q" field of "ItemList" table
+		And I input "1,000" text in "Quantity" field of "ItemList" table
 		And I activate "Unit" field in "ItemList" table
 		And I select current line in "ItemList" table
 		And I click choice button of "Unit" attribute in "ItemList" table
@@ -693,11 +702,11 @@ Scenario: _2066011 change quantity in the linked string in the PI, GR after PI, 
 			|'Line No. [1] [Boots 37/18SD] RowID movements remaining: 12 . Required: 1 . Lacking: 11 .'|
 	* Change quantity (more then GR, GR exist)
 		And I go to line in "ItemList" table
-			| 'Item'  | 'Item key' | 'Q'      |
+			| 'Item'  | 'Item key' | 'Quantity'      |
 			| 'Boots' | '37/18SD'  | '1,000' |
-		And I activate "Q" field in "ItemList" table
+		And I activate "Quantity" field in "ItemList" table
 		And I select current line in "ItemList" table
-		And I input "27,000" text in "Q" field of "ItemList" table
+		And I input "27,000" text in "Quantity" field of "ItemList" table
 		And I finish line editing in "ItemList" table
 		And I click "Post and close" button
 		Then user message window does not contain messages
@@ -1299,8 +1308,8 @@ Scenario: _2066039 change quantity in the linked string in the PRO (one session)
 			| 'Item'  | 'Item key' |
 			| 'Shirt' | '36/Red'   |
 		And I select current line in "ItemList" table
-		And I activate "Q" field in "ItemList" table
-		And I input "5,000" text in "Q" field of "ItemList" table
+		And I activate "Quantity" field in "ItemList" table
+		And I input "5,000" text in "Quantity" field of "ItemList" table
 		And I click "Post" button
 		Then "1C:Enterprise" window is opened
 		And I click "OK" button
@@ -1310,9 +1319,9 @@ Scenario: _2066039 change quantity in the linked string in the PRO (one session)
 		And I go to line in "ItemList" table
 			| 'Item'  | 'Item key' |
 			| 'Shirt' | '36/Red'   |
-		And I activate "Q" field in "ItemList" table
+		And I activate "Quantity" field in "ItemList" table
 		And I select current line in "ItemList" table
-		And I input "8,000" text in "Q" field of "ItemList" table
+		And I input "8,000" text in "Quantity" field of "ItemList" table
 		And I finish line editing in "ItemList" table
 		And I click "Post and close" button
 		Then user message window does not contain messages
@@ -1332,8 +1341,8 @@ Scenario: _2066040 change quantity in the linked string in the PR (one session)
 			| 'Item'  | 'Item key' |
 			| 'Shirt' | '36/Red'   |
 		And I select current line in "ItemList" table
-		And I activate "Q" field in "ItemList" table
-		And I input "5,000" text in "Q" field of "ItemList" table
+		And I activate "Quantity" field in "ItemList" table
+		And I input "5,000" text in "Quantity" field of "ItemList" table
 		And I click "Post" button
 		Then "1C:Enterprise" window is opened
 		And I click "OK" button
@@ -1343,9 +1352,9 @@ Scenario: _2066040 change quantity in the linked string in the PR (one session)
 		And I go to line in "ItemList" table
 			| 'Item'  | 'Item key' |
 			| 'Shirt' | '36/Red'   |
-		And I activate "Q" field in "ItemList" table
+		And I activate "Quantity" field in "ItemList" table
 		And I select current line in "ItemList" table
-		And I input "8,000" text in "Q" field of "ItemList" table
+		And I input "8,000" text in "Quantity" field of "ItemList" table
 		And I finish line editing in "ItemList" table
 		And I click "Post and close" button
 		Then user message window does not contain messages

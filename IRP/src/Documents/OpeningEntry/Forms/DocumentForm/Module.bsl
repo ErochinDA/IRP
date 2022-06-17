@@ -150,27 +150,27 @@ EndProcedure
 
 &AtClient
 Procedure DecorationGroupTitleCollapsedPictureClick(Item)
-	DocOpeningEntryClient.DecorationGroupTitleCollapsedPictureClick(Object, ThisObject, Item);
+	DocumentsClientServer.ChangeTitleCollapse(Object, ThisObject, True);
 EndProcedure
 
 &AtClient
 Procedure DecorationGroupTitleCollapsedLabelClick(Item)
-	DocOpeningEntryClient.DecorationGroupTitleCollapsedLabelClick(Object, ThisObject, Item);
+	DocumentsClientServer.ChangeTitleCollapse(Object, ThisObject, True);
 EndProcedure
 
 &AtClient
 Procedure DecorationGroupTitleUncollapsedPictureClick(Item)
-	DocOpeningEntryClient.DecorationGroupTitleUncollapsedPictureClick(Object, ThisObject, Item);
+	DocumentsClientServer.ChangeTitleCollapse(Object, ThisObject, False);
 EndProcedure
 
 &AtClient
 Procedure DecorationGroupTitleUncollapsedLabelClick(Item)
-	DocOpeningEntryClient.DecorationGroupTitleUncollapsedLabelClick(Object, ThisObject, Item);
+	DocumentsClientServer.ChangeTitleCollapse(Object, ThisObject, False);
 EndProcedure
 
 &AtClient
 Procedure DescriptionClick(Item, StandardProcessing)
-	DocOpeningEntryClient.DescriptionClick(Object, ThisObject, Item, StandardProcessing);
+	CommonFormActions.EditMultilineText(ThisObject, Item, StandardProcessing);
 EndProcedure
 
 &AtClient
@@ -193,6 +193,36 @@ Procedure InventoryItemEditTextChange(Item, Text, StandardProcessing)
 	ArrayOfFilters.Add(DocumentsClientServer.CreateFilterItem("ItemType.Type", PredefinedValue(
 		"Enum.ItemTypes.Service"), ComparisonType.NotEqual));
 	DocumentsClient.ItemEditTextChange(Object, ThisObject, Item, Text, StandardProcessing, ArrayOfFilters);
+EndProcedure
+
+&AtClient
+Procedure InventorySerialLotNumberStartChoice(Item, ChoiceData, StandardProcessing)
+	CurrentData = Items.Inventory.CurrentData;
+	If CurrentData = Undefined Then
+		Return;
+	EndIf;
+	
+	FormParameters = New Structure();
+	FormParameters.Insert("ItemType", Undefined);
+	FormParameters.Insert("Item"    , CurrentData.Item);
+	FormParameters.Insert("ItemKey" , CurrentData.ItemKey);
+
+	SerialLotNumberClient.StartChoice(Item, ChoiceData, StandardProcessing, ThisObject, FormParameters);
+EndProcedure
+
+&AtClient
+Procedure InventorySerialLotNumberEditTextChange(Item, Text, StandardProcessing)
+	CurrentData = Items.Inventory.CurrentData;
+	If CurrentData = Undefined Then
+		Return;
+	EndIf;
+	
+	FormParameters = New Structure();
+	FormParameters.Insert("ItemType", Undefined);
+	FormParameters.Insert("Item"    , CurrentData.Item);
+	FormParameters.Insert("ItemKey" , CurrentData.ItemKey);
+
+	SerialLotNumberClient.EditTextChange(Item, Text, StandardProcessing, ThisObject, FormParameters);
 EndProcedure
 
 &AtClient

@@ -1,72 +1,49 @@
-Procedure OnOpen(Object, Form, Cancel, AddInfo = Undefined) Export
-	DocumentsClient.SetTextOfDescriptionAtForm(Object, Form);
+
+#Region FORM
+
+Procedure OnOpen(Object, Form, Cancel) Export
+	ViewClient_V2.OnOpen(Object, Form, "ItemList");
 EndProcedure
 
-Procedure ItemListOnChange(Object, Form, Item = Undefined, CurrentRowData = Undefined) Export
-	DocumentsClient.FillRowIDInItemList(Object);
-EndProcedure
-
-Procedure ItemListItemOnChange(Object, Form, Item = Undefined) Export
-	CurrentRow = Form.Items.ItemList.CurrentData;
-	If CurrentRow = Undefined Then
-		Return;
-	EndIf;
-	CurrentRow.ItemKey = CatItemsServer.GetItemKeyByItem(CurrentRow.Item);
-	If ValueIsFilled(CurrentRow.ItemKey) And ServiceSystemServer.GetObjectAttribute(CurrentRow.ItemKey, "Item")
-		<> CurrentRow.Item Then
-		CurrentRow.ItemKey = Undefined;
-	EndIf;
-
-	CalculationSettings = New Structure();
-	CalculationSettings.Insert("UpdateUnit");
-	CalculationStringsClientServer.CalculateItemsRow(Object, CurrentRow, CalculationSettings);
-EndProcedure
-
-#Region PickUpItems
-
-Procedure PickupItemsEnd(Result, AdditionalParameters) Export
-	If Not ValueIsFilled(Result) Or Not AdditionalParameters.Property("Object") Or Not AdditionalParameters.Property(
-		"Form") Then
-		Return;
-	EndIf;
-
-	FilterString = "Item, ItemKey, Unit";
-	FilterStructure = New Structure(FilterString);
-	For Each ResultElement In Result Do
-		FillPropertyValues(FilterStructure, ResultElement);
-		ExistingRows = AdditionalParameters.Object.ItemList.FindRows(FilterStructure);
-		If ExistingRows.Count() Then
-			Row = ExistingRows[0];
-		Else
-			Row = AdditionalParameters.Object.ItemList.Add();
-			FillPropertyValues(Row, ResultElement, FilterString);
-		EndIf;
-		Row.PhysCount = Row.PhysCount + ResultElement.Quantity;
-		Row.Difference = Row.PhysCount - Row.ExpCount;
-	EndDo;
-	ItemListOnChange(AdditionalParameters.Object, AdditionalParameters.Form, Undefined, Undefined);
-EndProcedure
-
-Procedure OpenPickupItems(Object, Form, Command) Export
-	NotifyParameters = New Structure();
-	NotifyParameters.Insert("Object", Object);
-	NotifyParameters.Insert("Form", Form);
-	NotifyDescription = New NotifyDescription("PickupItemsEnd", DocPhysicalCountByLocationClient, NotifyParameters);
-	OpenFormParameters = New Structure();
-	StoreArray = New Array();
-	StoreArray.Add(Object.Store);
-
-	If Command.AssociatedTable <> Undefined Then
-		OpenFormParameters.Insert("AssociatedTableName", Command.AssociatedTable.Name);
-		OpenFormParameters.Insert("Object", Object);
-	EndIf;
-
-	OpenFormParameters.Insert("Stores", StoreArray);
-	OpenFormParameters.Insert("EndPeriod", CommonFunctionsServer.GetCurrentSessionDate());
-	OpenForm("CommonForm.PickUpItems", OpenFormParameters, Form, , , , NotifyDescription);
+Procedure AfterWriteAtClient(Object, Form, WriteParameters, AddInfo = Undefined) Export
+	Return;
 EndProcedure
 
 #EndRegion
+
+#Region STORE
+
+Procedure StoreOnChange(Object, Form, Item) Export
+	ViewClient_V2.StoreObjectAttrOnChange(Object, Form, "ItemList");
+EndProcedure
+
+#EndRegion
+
+#Region ITEM_LIST
+
+Procedure ItemListSelection(Object, Form, Item, RowSelected, Field, StandardProcessing) Export
+	ViewClient_V2.ItemListSelection(Object, Form, Item, RowSelected, Field, StandardProcessing);
+EndProcedure
+
+Procedure ItemListBeforeAddRow(Object, Form, Item, Cancel, Clone, Parent, IsFolder, Parameter) Export
+	ViewClient_V2.ItemListBeforeAddRow(Object, Form, Cancel, Clone);
+EndProcedure
+
+Procedure ItemListBeforeDeleteRow(Object, Form, Item, Cancel, AddInfo = Undefined) Export
+	Return;
+EndProcedure
+
+Procedure ItemListAfterDeleteRow(Object, Form, Item) Export
+	DocumentsClient.ItemListAfterDeleteRow(Object, Form, Item);
+EndProcedure
+
+#Region ITEM_LIST_COLUMNS
+
+#Region _ITEM
+
+Procedure ItemListItemOnChange(Object, Form, CurrentData = Undefined) Export
+	ViewClient_V2.ItemListItemOnChange(Object, Form, CurrentData);
+EndProcedure
 
 Procedure ItemListItemStartChoice(Object, Form, Item, ChoiceData, StandardProcessing) Export
 	OpenSettings = DocumentsClient.GetOpenSettingsForSelectItemWithoutServiceFilter();
@@ -78,35 +55,32 @@ Procedure ItemListItemEditTextChange(Object, Form, Item, Text, StandardProcessin
 	DocumentsClient.ItemEditTextChange(Object, Form, Item, Text, StandardProcessing, ArrayOfFilters);
 EndProcedure
 
-Procedure StoreOnChange(Object, Form, Item) Export
-	DocumentsClientServer.ChangeTitleGroupTitle(Object, Form);
-EndProcedure
+#EndRegion
 
-Procedure DescriptionClick(Object, Form, Item, StandardProcessing) Export
-	StandardProcessing = False;
-	CommonFormActions.EditMultilineText(Item.Name, Form);
-EndProcedure
+#Region ITEM_KEY
 
-#Region GroupTitleDecorationsEvents
-
-Procedure DecorationGroupTitleCollapsedPictureClick(Object, Form, Item) Export
-	DocumentsClientServer.ChangeTitleCollapse(Object, Form, True);
-EndProcedure
-
-Procedure DecorationGroupTitleCollapsedLabelClick(Object, Form, Item) Export
-	DocumentsClientServer.ChangeTitleCollapse(Object, Form, True);
-EndProcedure
-
-Procedure DecorationGroupTitleUncollapsedPictureClick(Object, Form, Item) Export
-	DocumentsClientServer.ChangeTitleCollapse(Object, Form, False);
-EndProcedure
-
-Procedure DecorationGroupTitleUncollapsedLabelClick(Object, Form, Item) Export
-	DocumentsClientServer.ChangeTitleCollapse(Object, Form, False);
+Procedure ItemListItemKeyOnChange(Object, Form, CurrentData = Undefined) Export
+	ViewClient_V2.ItemListItemKeyOnChange(Object, Form, CurrentData);
 EndProcedure
 
 #EndRegion
 
-Procedure SearchByBarcode(Barcode, Object, Form) Export
-	DocumentsClient.SearchByBarcode(Barcode, Object, Form);
+#Region PHYS_COUNT
+
+Procedure ItemListPhysCountOnChange(Object, Form, CurrentData = Undefined) Export
+	ViewClient_V2.ItemListPhysCountOnChange(Object, Form, CurrentData);
 EndProcedure
+
+#EndRegion
+
+#Region MANUAL_COUNT
+
+Procedure ItemListManualFixedCountOnChange(Object, Form, CurrentData = Undefined) Export
+	ViewClient_V2.ItemListManualFixedCountOnChange(Object, Form, CurrentData);
+EndProcedure
+
+#EndRegion
+
+#EndRegion
+
+#EndRegion

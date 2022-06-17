@@ -32,50 +32,6 @@ EndProcedure
 
 #EndRegion
 
-#Region Stores
-
-Function GetCurrentStore(ObjectData) Export
-
-	CurrentStore = PredefinedValue("Catalog.Stores.EmptyRef");
-	HaveAgreement = False;
-	If TypeOf(ObjectData) = Type("Structure") And ObjectData.Property("Agreement") Then
-
-		If Not ObjectData.Agreement = Undefined Then
-			HaveAgreement = Not ObjectData.Agreement.isempty();
-		EndIf;
-
-	ElsIf (TypeOf(ObjectData) = Type("FormDataStructure") And ObjectData.Property("Agreement"))
-		Or ObjectData.Metadata().Attributes.Find("Agreement") <> Undefined Then
-		HaveAgreement = True;
-	Else
-		HaveAgreement = False;
-	EndIf;
-	If HaveAgreement Then
-		AgreementInfo = CatAgreementsServer.GetAgreementInfo(ObjectData.Agreement);
-		CurrentStore = AgreementInfo.Store;
-	EndIf;
-
-	If Not ValueIsFilled(CurrentStore) Then
-
-		UserSettings = UserSettingsServer.GetUserSettingsForClientModule(ObjectData.Ref);
-
-		For Each Setting In UserSettings Do
-
-			If Setting.AttributeName = "ItemList.Store" Then
-				CurrentStore = Setting.Value;
-				Break;
-			EndIf;
-
-		EndDo;
-
-	EndIf;
-
-	Return CurrentStore;
-
-EndFunction
-
-#EndRegion
-
 #Region ItemList
 
 Procedure SetNewTableUUID(Table, LinkedTables) Export
@@ -224,12 +180,11 @@ EndFunction
 // Description
 // 
 // Parameters:
-// 	AgreementParameters Structure
-//		Keys:
-//		- Partner
-//		- Agreement
-//		- CurrentDate
-//		- ArrayOfFilters
+// 	AgreementParameters - Structure:
+//		* Partner - CatalogRef.Partners
+//		* Agreement - CatalogRef.Agreements
+//		* CurrentDate - Date
+//		* ArrayOfFilters - Array of Filter
 // Returns:
 // 	CatalogRef.Agreements - Description
 Function GetAgreementByPartner(AgreementParameters) Export
@@ -340,8 +295,12 @@ EndProcedure
 
 Procedure DeleteUnavailableTitleItemNames(ItemNames) Export
 	UnavailableNames = New Array();
-	If Not CatCompaniesServer.isUseCompanies() Then
+	If Not FOServer.IsUseCompanies() Then
 		UnavailableNames.Add("Company");
+		UnavailableNames.Add("LegalName");
+	EndIf;
+	If Not FOServer.IsUsePartnerTerms() Then
+		UnavailableNames.Add("Agreement");
 	EndIf;
 	For Each Name In UnavailableNames Do
 		FoundedName = ItemNames.Find(Name);
@@ -365,26 +324,6 @@ Function PrepareServerData(Parameters) Export
 		If ValueIsFilled(Parameters.TaxesCache.Cache) Then
 
 			ArrayOfTaxesInCache = New Array();
-
-			SavedData = CommonFunctionsServer.DeserializeXMLUseXDTO(Parameters.TaxesCache.Cache);
-			If SavedData.Property("ArrayOfTaxInfo") Then
-				ArrayOfTaxInfo = SavedData.ArrayOfTaxInfo;
-				For Each ItemOfTaxInfo In ArrayOfTaxInfo Do
-					ItemOfTaxInfo.Insert("TaxTypeIsRate", ItemOfTaxInfo.Type = Enums.TaxType.Rate);
-					If Parameters.TaxesCache.Property("GetArrayOfTaxRates") Then
-
-						StructureOfTaxRates = GetStructureOfTaxRates(ItemOfTaxInfo.Tax, Parameters.TaxesCache.Date,
-							Parameters.TaxesCache.Company, Parameters.TaxesCache.GetArrayOfTaxRates);
-
-						ItemOfTaxInfo.Insert("ArrayOfTaxRates", StructureOfTaxRates.ArrayOfTaxRates);
-						ItemOfTaxInfo.Insert("ArrayOfTaxRatesForAgreement",
-							StructureOfTaxRates.ArrayOfTaxRatesForAgreement);
-						ItemOfTaxInfo.Insert("ArrayOfTaxRatesForItemKey", StructureOfTaxRates.ArrayOfTaxRatesForItemKey);
-						ItemOfTaxInfo.Insert("ArrayOfTaxRatesForCompany", StructureOfTaxRates.ArrayOfTaxRatesForCompany);
-					EndIf;
-					ArrayOfTaxesInCache.Add(ItemOfTaxInfo.Tax);
-				EndDo;
-			EndIf;
 
 			ArrayOfTaxes = New Array();
 
@@ -549,36 +488,6 @@ Function PrepareServerData(Parameters) Export
 	If Parameters.Property("GetRetailCustomerInfo") Then
 		Result.Insert("RetailCustomerInfo", CatRetailCustomersServer.GetRetailCustomerInfo(
 			Parameters.GetRetailCustomerInfo.RetailCustomer));
-	EndIf;
-
-	Return Result;
-EndFunction
-
-Function GetStructureOfTaxRates(Tax, Date, Company, Parameters)
-	Result = New Structure();
-	Result.Insert("ArrayOfTaxRates", New Array());
-	Result.Insert("ArrayOfTaxRatesForItemKey", New Array());
-	Result.Insert("ArrayOfTaxRatesForAgreement", New Array());
-	Result.Insert("ArrayOfTaxRatesForCompany", New Array());
-
-	Result.ArrayOfTaxRatesForCompany = TaxesServer.GetTaxRatesForCompany(New Structure("Date, Company, Tax", Date,
-		Company, Tax));
-	If Parameters.Property("Agreement") Then
-		Result.ArrayOfTaxRatesForAgreement = TaxesServer.GetTaxRatesForAgreement(
-			New Structure("Date, Company, Tax, Agreement", Date, Company, Tax, Parameters.Agreement));
-	EndIf;
-
-	If Not Result.ArrayOfTaxRatesForAgreement.Count() Then
-		ItemKey = ?(Parameters.Property("ItemKey"), Parameters.ItemKey, Catalogs.ItemKeys.EmptyRef());
-
-		Result.ArrayOfTaxRatesForItemKey = TaxesServer.GetTaxRatesForItemKey(New Structure("Date, Company, Tax, ItemKey",
-			Date, Company, Tax, ItemKey));
-	EndIf;
-
-	If Result.ArrayOfTaxRatesForAgreement.Count() Then
-		Result.ArrayOfTaxRates = Result.ArrayOfTaxRatesForAgreement;
-	Else
-		Result.ArrayOfTaxRates = Result.ArrayOfTaxRatesForItemKey;
 	EndIf;
 
 	Return Result;

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<mdclass:Subsystem xmlns:mdclass="http://g5.1c.ru/v8/dt/metadata/mdclass" uuid="81330a23-58ad-40db-86fe-5a09bcc96e5f">
+<mdclass:Subsystem xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:core="http://g5.1c.ru/v8/dt/mcore" xmlns:mdclass="http://g5.1c.ru/v8/dt/metadata/mdclass" uuid="81330a23-58ad-40db-86fe-5a09bcc96e5f">
   <name>Accounting</name>
   <synonym>
     <key>en</key>
@@ -7,12 +7,17 @@
   </synonym>
   <includeHelpInContents>true</includeHelpInContents>
   <includeInCommandInterface>true</includeInCommandInterface>
-  <content>Catalog.LadgerTypes</content>
-  <content>ChartOfCharacteristicTypes.R6010D_MasterExtraDimensionTypes</content>
+  <picture xsi:type="core:PictureRef">
+    <picture>CommonPicture.Bookkeeping</picture>
+  </picture>
+  <content>ChartOfCharacteristicTypes.AccountingExtraDimensionTypes</content>
   <content>Document.JournalEntry</content>
-  <content>ChartOfAccounts.R6010C_Master</content>
-  <content>InformationRegister.CompanyLadgerTypes</content>
+  <content>ChartOfAccounts.Basic</content>
   <content>AccumulationRegister.T1040T_AccountingAmounts</content>
   <content>FunctionalOption.UseAccounting</content>
-  <subsystems>TrialBallanceAccounts</subsystems>
+  <content>Catalog.AccountingOperations</content>
+  <content>AccountingRegister.Basic</content>
+  <subsystems>Accounts</subsystems>
+  <subsystems>LedgerTypes</subsystems>
+  <subsystems>Other</subsystems>
 </mdclass:Subsystem>

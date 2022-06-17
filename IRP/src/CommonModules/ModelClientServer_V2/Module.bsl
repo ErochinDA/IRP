@@ -3,30 +3,21 @@
 
 Procedure EntryPoint(StepNames, Parameters) Export
 	InitEntryPoint(StepNames, Parameters);
-	Parameters.ModelInveronment.StepNamesCounter.Add(StepNames);
+	Parameters.ModelEnvironment.StepNamesCounter.Add(StepNames);
 	
 #IF Client THEN
 	Transfer = New Structure("Form, Object", Parameters.Form, Parameters.Object);
-	If ValueIsFilled(Parameters.PropertyBeforeChange.Form.Names) Then
-		// превращаем форму в структуру, что бы на сервере были доступны реквизиты формы, из них нужно читать данные
-		TransferForm = New Structure(Parameters.PropertyBeforeChange.Form.Names);
-		FillPropertyValues(TransferForm, Transfer.Form);
-		Parameters.Form = TransferForm;
-	Else
-		Parameters.Form = Undefined;
-	EndIf;
+	TransferFormToStructure(Transfer, Parameters);
 #ENDIF
 
 	ModelServer_V2.ServerEntryPoint(StepNames, Parameters);
 	
 #IF Client THEN
-	Parameters.Form   = Transfer.Form;
-	Parameters.Object = Transfer.Object;
+	TransferStructureToForm(Transfer, Parameters);
 #ENDIF
 	
-	// проверяем что кэш был инициализирован из этой EntryPoint
-	// и если это так и мы дошли до конца процедуры то значит что ChainComplete 
-	If Parameters.ModelInveronment.FirstStepNames = StepNames Then
+	// if cache was initialized from this EntryPoint then ChainComplete
+	If Parameters.ModelEnvironment.FirstStepNames = StepNames Then
 		Execute StrTemplate("%1.OnChainComplete(Parameters);", Parameters.ControllerModuleName);
 		DestroyEntryPoint(Parameters);
 	EndIf;
@@ -37,9 +28,25 @@ Procedure ServerEntryPoint(StepNames, Parameters) Export
 	For Each ArrayItem In StrSplit(StepNames, ",") Do
 		Execute StrTemplate("%1.%2(Parameters, Chain);", 
 			Parameters.ControllerModuleName, 
-			StrReplace(TrimAll(ArrayItem),Chars.NBSp,""));
+			StrReplace(TrimAll(ArrayItem), Chars.NBSp, ""));
 	EndDo;
 	ExecuteChain(Parameters, Chain);
+EndProcedure
+
+Procedure TransferFormToStructure(Transfer, Parameters) Export
+	If ValueIsFilled(Parameters.PropertyBeforeChange.Form.Names) Then
+		// transfer form to structure, on server will be available attributes for read data
+		TransferForm = New Structure(Parameters.PropertyBeforeChange.Form.Names);
+		FillPropertyValues(TransferForm, Transfer.Form);
+		Parameters.Form = TransferForm;
+	Else
+		Parameters.Form = Undefined;
+	EndIf;
+EndProcedure
+
+Procedure TransferStructureToForm(Transfer, Parameters) Export
+	Parameters.Form   = Transfer.Form;
+	Parameters.Object = Transfer.Object;
 EndProcedure
 
 #EndRegion
@@ -76,28 +83,20 @@ Function GetChainLinkResult(Options, Value)
 	Return Result;
 EndFunction
 
-Function IsAlreadyExecutedStep(Parameters, Name, Key)
-	For Each Step In Parameters.ModelInveronment.AlreadyExecutedSteps Do
-		If Upper(Step.Name) = Upper(Name) And Upper(Step.Key) = Upper(Key) Then
-			Return True;
-		EndIf;
-	EndDo;
-	Return False;
-EndFunction
-
 Procedure ExecuteChain(Parameters, Chain)
 	For Each ChainLink in Chain Do
 		Name = ChainLink.Key;
 		If Chain[Name].Enable Then
 			Results = New Array();
 			For Each Options In Chain[Name].Options Do
-				If Options.DontExecuteIfExecutedBefore And IsAlreadyExecutedStep(Parameters, Name, Options.Key) Then
-					Continue;
+				If Options.DontExecuteIfExecutedBefore 
+					And Not Parameters.ModelEnvironment.AlreadyExecutedSteps.Get(Name + ":" + Options.Key) = Undefined Then
+						Continue;
 				EndIf;
 				Result = Undefined;
 				Execute StrTemplate("Result = %1(Options)", Chain[Name].ExecutorName);
 				Results.Add(GetChainLinkResult(Options, Result));
-				Parameters.ModelInveronment.AlreadyExecutedSteps.Add(New Structure("Name, Key", Name, Options.Key));
+				Parameters.ModelEnvironment.AlreadyExecutedSteps.Insert(Name + ":" + Options.Key, New Structure("Name, Key", Name, Options.Key));
 			EndDo;
 			Execute StrTemplate("%1.%2(Parameters, Results);", Parameters.ControllerModuleName, Chain[Name].Setter);
 		EndIf;
@@ -157,8 +156,10 @@ Function GetChain()
 	
 	Chain.Insert("FillByCashTransferOrder" , GetChainLink("FillByCashTransferOrderExecute"));
 	
-	Chain.Insert("ChangeItemKeyByItem"    , GetChainLink("ChangeItemKeyByItemExecute"));
-	Chain.Insert("ChangeUnitByItemKey"    , GetChainLink("ChangeUnitByItemKeyExecute"));
+	Chain.Insert("ChangeItemByPartnerItem" , GetChainLink("ChangeItemByPartnerItemExecute"));
+	Chain.Insert("ChangeItemKeyByItem"     , GetChainLink("ChangeItemKeyByItemExecute"));
+	Chain.Insert("ChangeProcurementMethodByItemKey" , GetChainLink("ChangeProcurementMethodByItemKeyExecute"));
+	
 	Chain.Insert("ChangeCurrencyByAccount", GetChainLink("ChangeCurrencyByAccountExecute"));
 	Chain.Insert("ChangePlanningTransactionBasisByCurrency", GetChainLink("ChangePlanningTransactionBasisByCurrencyExecute"));
 	Chain.Insert("FillStoresInList"       , GetChainLink("FillStoresInListExecute"));
@@ -167,9 +168,19 @@ Function GetChain()
 	Chain.Insert("ChangeDeliveryDateInHeaderByDeliveryDateInList" , GetChainLink("ChangeDeliveryDateInHeaderByDeliveryDateInListExecute"));
 	Chain.Insert("ChangeUseShipmentConfirmationByStore" , GetChainLink("ChangeUseShipmentConfirmationByStoreExecute"));
 	Chain.Insert("ChangeUseGoodsReceiptByStore"         , GetChainLink("ChangeUseGoodsReceiptByStoreExecute"));
+	Chain.Insert("ChangeUseGoodsReceiptByUseShipmentConfirmation", GetChainLink("ChangeUseGoodsReceiptByUseShipmentConfirmationExecute"));
+	
 	Chain.Insert("ChangePriceTypeByAgreement"   , GetChainLink("ChangePriceTypeByAgreementExecute"));
 	Chain.Insert("ChangePriceTypeAsManual"      , GetChainLink("ChangePriceTypeAsManualExecute"));
-	Chain.Insert("ChangePriceByPriceType"       , GetChainLink("ChangePriceByPriceTypeExecute"));
+
+	Chain.Insert("ChangeUnitByItemKey"               , GetChainLink("ChangeUnitByItemKeyExecute"));
+	Chain.Insert("ChangeUseSerialLotNumberByItemKey" , GetChainLink("ChangeUseSerialLotNumberByItemKeyExecute"));
+	Chain.Insert("ChangeIsServiceByItemKey"          , GetChainLink("ChangeIsServiceByItemKeyExecute"));
+	
+	Chain.Insert("ClearSerialLotNumberByItemKey"    , GetChainLink("ClearSerialLotNumberByItemKeyExecute"));
+	Chain.Insert("ClearBarcodeByItemKey"            , GetChainLink("ClearBarcodeByItemKeyExecute"));
+	
+	Chain.Insert("ChangePriceByPriceType"        , GetChainLink("ChangePriceByPriceTypeExecute"));
 	Chain.Insert("ChangePaymentTermsByAgreement" , GetChainLink("ChangePaymentTermsByAgreementExecute"));	
 	Chain.Insert("RequireCallCreateTaxesFormControls", GetChainLink("RequireCallCreateTaxesFormControlsExecute"));
 	Chain.Insert("ChangeTaxRate", GetChainLink("ChangeTaxRateExecute"));
@@ -177,11 +188,26 @@ Function GetChain()
 	Chain.Insert("Calculations" , GetChainLink("CalculationsExecute"));
 	Chain.Insert("UpdatePaymentTerms" , GetChainLink("UpdatePaymentTermsExecute"));
 	
+	Chain.Insert("ChangePartnerByRetailCustomer"   , GetChainLink("ChangePartnerByRetailCustomerExecute"));
+	Chain.Insert("ChangeAgreementByRetailCustomer" , GetChainLink("ChangeAgreementByRetailCustomerExecute"));
+	Chain.Insert("ChangeLegalNameByRetailCustomer" , GetChainLink("ChangeLegalNameByRetailCustomerExecute"));
+	Chain.Insert("ChangeUsePartnerTransactionsByRetailCustomer" , GetChainLink("ChangeUsePartnerTransactionsByRetailCustomerExecute"));
+
+	Chain.Insert("ChangeExpenseTypeByItemKey" , GetChainLink("ChangeExpenseTypeByItemKeyExecute"));
+	Chain.Insert("ChangeRevenueTypeByItemKey" , GetChainLink("ChangeRevenueTypeByItemKeyExecute"));
+	
+	Chain.Insert("ChangeReceiveAmountBySendAmount" , GetChainLink("ChangeReceiveAmountBySendAmountExecute"));
+	
+	Chain.Insert("CovertQuantityToQuantityInBaseUnit" , GetChainLink("CovertQuantityToQuantityInBaseUnitExecute"));
+	
+	Chain.Insert("CalculateDifferenceCount" , GetChainLink("CalculateDifferenceCountExecute"));
+
 	// Extractors
-	Chain.Insert("ExtractDataItemKeyIsService"             , GetChainLink("ExtractDataItemKeyIsServiceExecute"));
-	Chain.Insert("ExtractDataItemKeysWithSerialLotNumbers" , GetChainLink("ExtractDataItemKeysWithSerialLotNumbersExecute"));
 	Chain.Insert("ExtractDataAgreementApArPostingDetail"   , GetChainLink("ExtractDataAgreementApArPostingDetailExecute"));
 	Chain.Insert("ExtractDataCurrencyFromAccount"          , GetChainLink("ExtractDataCurrencyFromAccountExecute"));
+	
+	// Loaders
+	Chain.Insert("LoadTable", GetChainLink("LoadTableExecute"));
 	
 	Return Chain;
 EndFunction
@@ -190,15 +216,11 @@ EndFunction
 
 #Region ITEM_ITEMKEY_UNIT_QUANTITYINBASEUNIT
 
-// При изменении Item изменяется ItemKey при изменении ItemKey изменяется Unit который может изменить QuantityInBaseUnit
-// этот код может применятся во всех документах где есть Item, ItemKey, Unit, QuantityInBaseUnit, Quantity
-
 Function DefaultQuantityInListOptions() Export
 	Return GetChainLinkOptions("CurrentQuantity");
 EndFunction
 
 Function DefaultQuantityInListExecute(Options) Export
-	// устанавливает 1 в реквизит Quantity если в реквизите Quantity 0
 	Quantity = ?(ValueIsFilled(Options.CurrentQuantity), Options.CurrentQuantity, 1);
 	Return Quantity;
 EndFunction
@@ -217,19 +239,76 @@ Function ChangeItemKeyByItemExecute(Options) Export
 	Return CatItemsServer.GetItemKeyByItem(Options.Item);
 EndFunction
 
-// Для вычисления Unit нужен только ItemKey
 Function ChangeUnitByItemKeyOptions() Export
 	Return GetChainLinkOptions("ItemKey");
 EndFunction
 
-// Возвращает Unit по ItemKey который передан в параметре Options.ItemKey
 Function ChangeUnitByItemKeyExecute(Options) Export
-	// вычисление Unit возлагаем на функцию ItemUnitInfo() вся логика получения Unit в ней
 	If Not ValueIsFilled(Options.ItemKey) Then
 		Return Undefined;
 	EndIf;
 	UnitInfo = GetItemInfo.ItemUnitInfo(Options.ItemKey);
 	Return UnitInfo.Unit;
+EndFunction
+
+#EndRegion
+
+#Region CLEAR_BARCODE_BY_ITEMKEY
+
+Function ClearBarcodeByItemKeyOptions() Export
+	Return GetChainLinkOptions("ItemKeyIsChanged, CurrentBarcode");
+EndFunction
+
+Function ClearBarcodeByItemKeyExecute(Options) Export
+	If Options.ItemKeyIsChanged Then
+		Return Undefined;
+	Else
+		Return Options.CurrentBarcode;
+	EndIf;
+EndFunction
+
+#EndRegion
+
+#Region CLEAR_SERIAL_LOT_NUMBER_BY_ITEMKEY
+
+Function ClearSerialLotNumberByItemKeyOptions() Export
+	Return GetChainLinkOptions("ItemKeyIsChanged, CurrentSerialLotNumber");
+EndFunction
+
+Function ClearSerialLotNumberByItemKeyExecute(Options) Export
+	If Options.ItemKeyIsChanged Then
+		Return Undefined;
+	Else
+		Return Options.CurrentSerialLotNumber;
+	EndIf;
+EndFunction
+
+#EndRegion
+
+#Region CHANGE_IS_SERVICE_BY_ITEMKEY
+
+Function ChangeIsServiceByItemKeyOptions() Export
+	Return GetChainLinkOptions("ItemKey");
+EndFunction
+
+Function ChangeIsServiceByItemKeyExecute(Options) Export
+	Result = GetItemInfo.GetInfoByItemsKey(Options.ItemKey);
+	If Result.Count() Then
+		Return Result[0].IsService;
+	EndIf;	
+	Return False;
+EndFunction
+
+#EndRegion
+
+#Region CHANGE_USE_SERIAL_LOT_NUMBER_BY_ITEMKEY
+
+Function ChangeUseSerialLotNumberByItemKeyOptions() Export
+	Return GetChainLinkOptions("ItemKey");
+EndFunction
+
+Function ChangeUseSerialLotNumberByItemKeyExecute(Options) Export
+	Return SerialLotNumbersServer.IsItemKeyWithSerialLotNumbers(Options.ItemKey);
 EndFunction
 
 #EndRegion
@@ -405,6 +484,19 @@ EndFunction
 
 #EndRegion
 
+#Region CHANGE_LEGAL_NAME_BY_RETAIL_CUSTOMER
+
+Function ChangeLegalNameByRetailCustomerOptions() Export
+	Return GetChainLinkOptions("RetailCustomer");
+EndFunction
+
+Function ChangeLegalNameByRetailCustomerExecute(Options) Export
+	RetailCustomerInfo = CatRetailCustomersServer.GetRetailCustomerInfo(Options.RetailCustomer);
+	Return RetailCustomerInfo.LegalName;
+EndFunction
+
+#EndRegion
+
 #Region CHANGE_PARTNER_BY_LEGAL_NAME
 
 Function ChangePartnerByLegalNameOptions() Export
@@ -425,6 +517,32 @@ EndFunction
 
 #EndRegion
 
+#Region CHANGE_PARTNER_BY_RETAIL_CUSTOMER
+
+Function ChangePartnerByRetailCustomerOptions() Export
+	Return GetChainLinkOptions("RetailCustomer");
+EndFunction
+
+Function ChangePartnerByRetailCustomerExecute(Options) Export
+	RetailCustomerInfo = CatRetailCustomersServer.GetRetailCustomerInfo(Options.RetailCustomer);
+	Return RetailCustomerInfo.Partner;
+EndFunction
+
+#EndRegion
+
+#Region CHANGE_USE_PARTNER_TRANSACTIONS_BY_RETAIL_CUSTOMER
+
+Function ChangeUsePartnerTransactionsByRetailCustomerOptions() Export
+	Return GetChainLinkOptions("RetailCustomer");
+EndFunction
+
+Function ChangeUsePartnerTransactionsByRetailCustomerExecute(Options) Export
+	RetailCustomerInfo = CatRetailCustomersServer.GetRetailCustomerInfo(Options.RetailCustomer);
+	Return RetailCustomerInfo.UsePartnerTransactions;
+EndFunction
+
+#EndRegion
+
 #Region CHANGE_AGREEMENT_BY_PARTNER
 
 Function ChangeAgreementByPartnerOptions() Export
@@ -433,6 +551,19 @@ EndFunction
 
 Function ChangeAgreementByPartnerExecute(Options) Export
 	Return DocumentsServer.GetAgreementByPartner(Options);
+EndFunction
+
+#EndRegion
+
+#Region CHANGE_AGREEMENT_BY_RETAIL_CUSTOMER
+
+Function ChangeAgreementByRetailCustomerOptions() Export
+	Return GetChainLinkOptions("RetailCustomer");
+EndFunction
+
+Function ChangeAgreementByRetailCustomerExecute(Options) Export
+	RetailCustomerInfo = CatRetailCustomersServer.GetRetailCustomerInfo(Options.RetailCustomer);
+	Return RetailCustomerInfo.Agreement;
 EndFunction
 
 #EndRegion
@@ -498,6 +629,9 @@ Function ChangeCurrencyByAgreementOptions() Export
 EndFunction
 
 Function ChangeCurrencyByAgreementExecute(Options) Export
+	If Not ValueIsFilled(Options.Agreement) Then
+		Return Options.CurrentCurrency;
+	EndIf;
 	AgreementInfo = CatAgreementsServer.GetAgreementInfo(Options.Agreement);
 	If ValueIsFilled(AgreementInfo.Currency) Then
 		Return AgreementInfo.Currency;
@@ -509,14 +643,10 @@ EndFunction
 
 #Region CHANGE_CURRENCY_BY_ACCOUNT
 
-// Параметры которые нужны для вычисления Currency, в этом случае достаточно только Account
-// если в Account не будет указана Currency то останется CurrentCurrency (та что уже указана в документе)
 Function ChangeCurrencyByAccountOptions() Export
 	Return GetChainLinkOptions("Account, CurrentCurrency");
 EndFunction
 
-// Возвращает Currency которая указана в Account
-// если в Account пусто возвращает Currency которая уже указана в документе (параметр CurrentCurrency)
 Function ChangeCurrencyByAccountExecute(Options) Export
 	If Not ValueIsFilled(Options.Account) Then
 		Return Options.CurrentCurrency;
@@ -527,7 +657,6 @@ Function ChangeCurrencyByAccountExecute(Options) Export
 	EndIf;
 	Return Options.CurrentCurrency;
 EndFunction
-
 
 Function DefaultCurrencyInListOptions() Export
 	Return GetChainLinkOptions("CurrentCurrency, Account");
@@ -553,6 +682,9 @@ Function ChangeCompanyByAgreementOptions() Export
 EndFunction
 
 Function ChangeCompanyByAgreementExecute(Options) Export
+	If Not ValueIsFilled(Options.Agreement) Then
+		Return Options.CurrentCompany;
+	EndIf;
 	AgreementInfo = CatAgreementsServer.GetAgreementInfo(Options.Agreement);
 	If ValueIsFilled(AgreementInfo.Company) Then
 		Return AgreementInfo.Company;
@@ -565,10 +697,13 @@ EndFunction
 #Region CHANGE_PRICE_INCLUDE_TAX_BY_AGREEMENT
 
 Function ChangePriceIncludeTaxByAgreementOptions() Export
-	Return GetChainLinkOptions("Agreement");
+	Return GetChainLinkOptions("Agreement, CurrentPriceIncludeTax");
 EndFunction
 
 Function ChangePriceIncludeTaxByAgreementExecute(Options) Export
+	If Not ValueIsFilled(Options.Agreement) Then
+		Return Options.CurrentPriceIncludeTax;
+	EndIf;
 	AgreementInfo = CatAgreementsServer.GetAgreementInfo(Options.Agreement);
 	Return AgreementInfo.PriceIncludeTax;
 EndFunction
@@ -578,11 +713,15 @@ EndFunction
 #Region CHANGE_PRICE_TYPE_BY_AGREEMENT
 
 Function ChangePriceTypeByAgreementOptions() Export
-	Return GetChainLinkOptions("Agreement");
+	Return GetChainLinkOptions("Agreement, CurrentPriceType");
 EndFunction
 
 Function ChangePriceTypeByAgreementExecute(Options) Export
-	Return CatAgreementsServer.GetAgreementInfo(Options.Agreement).PriceType;
+	If Not ValueIsFilled(Options.Agreement) Then
+		Return Options.CurrentPriceType;
+	EndIf;
+	AgreementInfo = CatAgreementsServer.GetAgreementInfo(Options.Agreement);
+	Return AgreementInfo.PriceType;
 EndFunction
 
 #EndRegion
@@ -594,7 +733,7 @@ Function ChangePriceTypeAsManualOptions() Export
 EndFunction
 
 Function ChangePriceTypeAsManualExecute(Options) Export
-	// если это изменение TotalAmount и установлена галочка DontCalculateRow, менять тип цены не нужно
+	// if TotalAmount is changed and DontCalculateRow = true  then do not need change PriceType
 	If Options.DontCalculateRow = True And Options.IsTotalAmountChange = True Then
 		Return Options.CurrentPriceType;
 	EndIf;
@@ -638,6 +777,9 @@ Function ChangeStoreByAgreementOptions() Export
 EndFunction
 
 Function ChangeStoreByAgreementExecute(Options) Export
+	If Not ValueIsFilled(Options.Agreement) Then
+		Return Options.CurrentStore;
+	EndIf;
 	AgreementInfo = CatAgreementsServer.GetAgreementInfo(Options.Agreement);
 	If ValueIsFilled(AgreementInfo.Store)  Then
 		Return AgreementInfo.Store;
@@ -654,11 +796,97 @@ Function ChangeDeliveryDateByAgreementOptions() Export
 EndFunction
 
 Function ChangeDeliveryDateByAgreementExecute(Options) Export
+	If Not ValueIsFilled(Options.Agreement) Then
+		Return Options.CurrentDeliveryDate;
+	EndIf;
 	AgreementInfo = CatAgreementsServer.GetAgreementInfo(Options.Agreement);
 	If ValueIsFilled(AgreementInfo.DeliveryDate)  Then
 		Return AgreementInfo.DeliveryDate;
 	EndIf;
 	Return Options.CurrentDeliveryDate;
+EndFunction
+
+#EndRegion
+
+#Region CHANGE_EXPENSE_TYPE_BY_ITEMKEY
+
+Function ChangeExpenseTypeByItemKeyOptions() Export
+	Return GetChainLinkOptions("Company, ItemKey");
+EndFunction
+
+Function ChangeExpenseTypeByItemKeyExecute(Options) Export
+	Return CatExpenseAndRevenueTypesServer.GetExpenseType(Options.Company, Options.ItemKey);
+EndFunction
+
+#EndRegion
+
+#Region CHANGE_REVENUE_TYPE_BY_ITEMKEY
+
+Function ChangeRevenueTypeByItemKeyOptions() Export
+	Return GetChainLinkOptions("Company, ItemKey");
+EndFunction
+
+Function ChangeRevenueTypeByItemKeyExecute(Options) Export
+	Return CatExpenseAndRevenueTypesServer.GetRevenueType(Options.Company, Options.ItemKey);
+EndFunction
+
+#EndRegion
+
+#Region CHANGE_ITEM_BY_PARTNER_ITEM
+
+Function ChangeItemByPartnerItemOptions() Export
+	Return GetChainLinkOptions("PartnerItem");
+EndFunction
+
+Function ChangeItemByPartnerItemExecute(Options) Export
+	Return DocumentsServer.GetItemAndItemKeyByPartnerItem(Options.PartnerItem);
+EndFunction
+
+#EndRegion
+
+#Region CHANGE_PROCUREMENT_METHOD_BY_ITEM_KEY
+
+Function ChangeProcurementMethodByItemKeyOptions() Export
+	Return GetChainLinkOptions("ProcurementMethod, ItemKey");
+EndFunction
+
+Function ChangeProcurementMethodByItemKeyExecute(Options) Export
+	If ValueIsFilled(Options.ProcurementMethod) Then
+		Return Options.ProcurementMethod;
+	EndIf;
+	If CatItemsServer.StoreMustHave(Options.ItemKey) Then
+		Return PredefinedValue("Enum.ProcurementMethods.Stock");
+	EndIf;
+	Return PredefinedValue("Enum.ProcurementMethods.EmptyRef");
+EndFunction
+
+#EndRegion
+
+#Region CHANGE_RECEIVE_AMOUNT_BY_SEND_AMOUNT
+
+Function ChangeReceiveAmountBySendAmountOptions() Export
+	Return GetChainLinkOptions("SendAmount, ReceiveAmount, SendCurrency, ReceiveCurrency");
+EndFunction
+
+Function ChangeReceiveAmountBySendAmountExecute(Options) Export
+	If ValueIsFilled(Options.SendCurrency) And ValueIsFilled(Options.ReceiveCurrency) 
+		And Options.SendCurrency = Options.ReceiveCurrency Then
+		Return Options.SendAmount;
+	Else
+		Return Options.ReceiveAmount;
+	EndIf;
+EndFunction
+
+#EndRegion
+
+#Region CALCULATE_DIFFERENCE
+
+Function CalculateDifferenceCountOptions() Export
+	Return GetChainLinkOptions("PhysCount, ExpCount, ManualFixedCount");
+EndFunction
+
+Function CalculateDifferenceCountExecute(Options) Export
+	Return Options.PhysCount - Options.ExpCount + Options.ManualFixedCount;
 EndFunction
 
 #EndRegion
@@ -669,7 +897,7 @@ Function DefaultDeliveryDateInHeaderOptions() Export
 	Return GetChainLinkOptions("ArrayOfDeliveryDateInList, Date, Agreement");
 EndFunction
 
-// Заполняет DeliveryDate в шапке по умолчанию
+// fill DeliveryDate in document header by default
 Function DefaultDeliveryDateInHeaderExecute(Options) Export
 	ArrayOfDeliveryDateUnique = New Array();
 	For Each DeliveryDate In Options.ArrayOfDeliveryDateInList Do
@@ -678,17 +906,16 @@ Function DefaultDeliveryDateInHeaderExecute(Options) Export
 		EndIf;
 	EndDo;
 	If ArrayOfDeliveryDateUnique.Count() = 1 Then
-		Return ArrayOfDeliveryDateUnique[0]; // В табличной части указан один DeliveryDate
+		Return ArrayOfDeliveryDateUnique[0];
 	ElsIf ArrayOfDeliveryDateUnique.Count() > 1 Then
-		Return Undefined; // В табличной части указаны несколько DeliveryDate
+		Return Undefined;
 	EndIf;
 	
-	// когда табличная часть пустая DeliveryDate заполняется из Agreement
 	If ValueIsFilled(Options.Agreement) Then
 		AgreementInfo = CatAgreementsServer.GetAgreementInfo(Options.Agreement);
 		DeliveryDateInAgreement = AgreementInfo.DeliveryDate;
 		If ValueIsFilled(DeliveryDateInAgreement) Then
-			Return DeliveryDateInAgreement; // DeliveryDate указанный в Agreement
+			Return DeliveryDateInAgreement;
 		EndIf;
 	EndIf;
 	Return Undefined;
@@ -698,21 +925,20 @@ Function DefaultDeliveryDateInListOptions() Export
 	Return GetChainLinkOptions("DeliveryDateInList, DeliveryDateInHeader, Date, Agreement");
 EndFunction
 
-// Заполняет DeliveryDate в табличной части по умолчанию
 Function DefaultDeliveryDateInListExecute(Options) Export
 	If ValueIsFilled(Options.DeliveryDateInList) Then
-		Return Options.DeliveryDateInList; // DeliveryDate уже заполнен
+		Return Options.DeliveryDateInList;
 	EndIf;
 	
 	If ValueIsFilled(Options.DeliveryDateInHeader) Then
-		Return Options.DeliveryDateInHeader; // DeliveryDate указанный в шапке документа
+		Return Options.DeliveryDateInHeader;
 	EndIf;
 	
 	If ValueIsFilled(Options.Agreement) Then
 		AgreementInfo = CatAgreementsServer.GetAgreementInfo(Options.Agreement);
 		DeliveryDateInAgreement = AgreementInfo.DeliveryDate;
 		If ValueIsFilled(DeliveryDateInAgreement) Then
-			Return DeliveryDateInAgreement; // DeliveryDate указанный в Agreement
+			Return DeliveryDateInAgreement;
 		EndIf;
 	EndIf;
 
@@ -723,7 +949,6 @@ Function FillDeliveryDateInListOptions() Export
 	Return GetChainLinkOptions("DeliveryDate, DeliveryDateInList");
 EndFunction
 
-// заполняет DeliveryDate в табличной части, тем DeliveryDate что передан в параметре 
 Function FillDeliveryDateInListExecute(Options) Export
 	If ValueIsFilled(Options.DeliveryDate) Then
 		Return Options.DeliveryDate;
@@ -735,11 +960,11 @@ Function ChangeDeliveryDateInHeaderByDeliveryDateInListOptions() Export
 	Return GetChainLinkOptions("ArrayOfDeliveryDateInList");
 EndFunction
 
-// изменяет DeliveryDate в шапке документа, взависимости от DeliveryDate указанных в табличной части ItemList.DeliveryDate
-// если в табличной части ItemList есть разные DeliveryDate то склад в шапке будет Undefined
-// если в табличной части ItemList есть только один DeliveryDate то DeliveryDate в шапке будет DeliveryDate = ItemList.DeliveryDate
+// change DeliveryDate in document header, dependencies of tabular part ItemList.DeliveryDate
+// if in tabular part ItemList have different DeliveryDate then in document header DeliveryDate = Undefined
+// if in tabular part ItemList have only one DeliveryDate then in document header DeliveryDate = ItemList.DeliveryDate
 Function ChangeDeliveryDateInHeaderByDeliveryDateInListExecute(Options) Export
-	// сделаем массив с DeliveryDate только с уникальными значениями
+	// create array of DeliveryDate with unique values
 	ArrayOfDeliveryDateUnique = New Array();
 	For Each DeliveryDate In Options.ArrayOfDeliveryDateInList Do
 		If ArrayOfDeliveryDateUnique.Find(DeliveryDate) = Undefined Then
@@ -761,20 +986,20 @@ Function EmptyStoreInHeaderOptions() Export
 	Return GetChainLinkOptions("DocumentRef, ArrayOfStoresInList, Agreement");
 EndFunction
 
-// Заполняет Store в шапке когда его очищают
+// fill store in document header when is clear field
 Function EmptyStoreInHeaderExecute(Options) Export
-	// заполняется из Agreement или из UserSettings
+	// fill store from Agreement or UserSettings
 	If ValueIsFilled(Options.Agreement) Then
 		StoreInAgreement = Options.Agreement.Store;
 		If ValueIsFilled(StoreInAgreement) Then
-			Return StoreInAgreement; // Склад указанный в Agreement
+			Return StoreInAgreement; // store from Agreement
 		EndIf;
 	EndIf;
 	
 	UserSettings = UserSettingsServer.GetUserSettingsForClientModule(Options.DocumentRef);
 	For Each Setting In UserSettings Do
 		If Setting.AttributeName = "ItemList.Store" Then
-			Return Setting.Value; // Склад указанный в настройках пользователя
+			Return Setting.Value; // store from UserSettings
 		EndIf;
 	EndDo;
 	
@@ -785,7 +1010,7 @@ Function DefaultStoreInHeaderOptions() Export
 	Return GetChainLinkOptions("DocumentRef, ArrayOfStoresInList, Agreement");
 EndFunction
 
-// Заполняет Store в шапке по умолчанию
+// fill store in document header by defult
 Function DefaultStoreInHeaderExecute(Options) Export
 	ArrayOfStoresUnique = New Array();
 	For Each Store In Options.ArrayOfStoresInList Do
@@ -794,24 +1019,24 @@ Function DefaultStoreInHeaderExecute(Options) Export
 		EndIf;
 	EndDo;
 	If ArrayOfStoresUnique.Count() = 1 Then
-		Return ArrayOfStoresUnique[0]; // В табличной части указан один склад
+		Return ArrayOfStoresUnique[0]; // in tabular part only one store
 	ElsIf ArrayOfStoresUnique.Count() > 1 Then
-		Return Undefined; // В табличной части указаны несколько складов
+		Return Undefined; // in tabular part several different stores
 	EndIf;
 	
-	// когда табличная часть пустая склад заполняется из Agreement или из UserSettings
+	// when tabular part is empty then fill store from Agreement or UserSettings
 	
 	If ValueIsFilled(Options.Agreement) Then
 		StoreInAgreement = Options.Agreement.Store;
 		If ValueIsFilled(StoreInAgreement) Then
-			Return StoreInAgreement; // Склад указанный в Agreement
+			Return StoreInAgreement; // store from Agreement
 		EndIf;
 	EndIf;
 	
 	UserSettings = UserSettingsServer.GetUserSettingsForClientModule(Options.DocumentRef);
 	For Each Setting In UserSettings Do
 		If Setting.AttributeName = "ItemList.Store" Then
-			Return Setting.Value; // Склад указанный в настройках пользователя
+			Return Setting.Value; // store from UserSettings
 		EndIf;
 	EndDo;
 	
@@ -819,34 +1044,38 @@ Function DefaultStoreInHeaderExecute(Options) Export
 EndFunction
 
 Function DefaultStoreInListOptions() Export
-	Return GetChainLinkOptions("StoreFromUserSettings, StoreInList, StoreInHeader, Agreement");
+	Return GetChainLinkOptions("StoreFromUserSettings, StoreInList, StoreInHeader, Agreement, StoreInPreviousRow");
 EndFunction
 
-// Заполняет склад в табличной части по умолчанию
+// fill store in tabular part ItemList by default
 Function DefaultStoreInListExecute(Options) Export
 	If ValueIsFilled(Options.StoreInList) Then
-		Return Options.StoreInList; // Склад уже заполнен
+		Return Options.StoreInList; // store already is filled
 	EndIf;
 	
 	If ValueIsFilled(Options.StoreInHeader) Then
-		Return Options.StoreInHeader; // Склад указанный в шапке документа
+		Return Options.StoreInHeader; // store for document header
+	EndIf;
+	
+	If ValueIsFilled(Options.StoreInPreviousRow) Then
+		Return Options.StoreInPreviousRow; // store from previous row
 	EndIf;
 	
 	If ValueIsFilled(Options.Agreement) Then
 		StoreInAgreement = Options.Agreement.Store;
 		If ValueIsFilled(StoreInAgreement) Then
-			Return StoreInAgreement; // Склад указанный в Agreement
+			Return StoreInAgreement; // store from Agreement
 		EndIf;
 	EndIf;
 	
-	Return Options.StoreFromUserSettings; // Склад указанный в настройках пользователя
+	Return Options.StoreFromUserSettings; // store from UserSettings
 EndFunction
 
 Function ChangeUseShipmentConfirmationByStoreOptions() Export
 	Return GetChainLinkOptions("Store, ItemKey");
 EndFunction
 
-// устанавливает значение true\false в UseShipmentConfirmation, значение берется из склада 
+// set value true\false in UseShipmentConfirmation 
 Function ChangeUseShipmentConfirmationByStoreExecute(Options) Export
 	Return ChangeOrderSchemeByStore(Options, "UseShipmentConfirmation");
 EndFunction
@@ -855,7 +1084,7 @@ Function ChangeUseGoodsReceiptByStoreOptions() Export
 	Return GetChainLinkOptions("Store, ItemKey");
 EndFunction
 
-// устанавливает значение true\false в UseGoodsReceipt, значение берется из склада
+// set value true\false in UseGoodsReceipt
 Function ChangeUseGoodsReceiptByStoreExecute(Options) Export
 	Return ChangeOrderSchemeByStore(Options, "UseGoodsReceipt");
 EndFunction
@@ -871,12 +1100,27 @@ Function ChangeOrderSchemeByStore(Options, ReceiptShipment)
 	Return StoreInfo[ReceiptShipment];
 EndFunction
 
+Function ChangeUseGoodsReceiptByUseShipmentConfirmationOptions() Export
+	Return GetChainLinkOptions("UseShipmentConfirmation, UseGoodsReceipt, StoreSender, StoreReceiver, ShowUserMessage");
+EndFunction
+
+Function ChangeUseGoodsReceiptByUseShipmentConfirmationExecute(Options) Export
+	If Options.UseShipmentConfirmation 
+		And Not Options.UseGoodsReceipt 
+		And ValueIsFilled(Options.StoreSender) 
+		And ValueIsFilled(Options.StoreReceiver) Then
+		Options.ShowUserMessage = True;
+		Return True;
+	Else
+		Return Options.UseGoodsReceipt;
+	EndIf;
+EndFunction
+
 Function FillStoresInListOptions() Export
 	Return GetChainLinkOptions("Store, StoreInList, IsUserChange");
 EndFunction
 
-// заполняет Store в табличной части, тем Store что передан в параметре если переданный склад заполнен
-// если не заполнен то оставляет тот склад что указан в табличной части
+// fill Store in tabular part, if Store is not filled do not change store in ItemList
 Function FillStoresInListExecute(Options) Export
 	If Options.IsUserChange = True Then
 		Return Options.Store;
@@ -891,17 +1135,17 @@ Function ChangeStoreInHeaderByStoresInListOptions() Export
 	Return GetChainLinkOptions("ArrayOfStoresInList");
 EndFunction
 
-// изменяет Store в шапке документа, взависимости от складов указанных в табличной части ItemList.Store
-// если в табличной части ItemList есть разные склады то склад в шапке будет Undefined
-// если в табличной части ItemList есть только один склад то склад в шапке будет Store = ItemList.Store
+// change Store in document header, dependencies of tabular part ItemList.Store
+// if in tabular part ItemList have different stores then in document header Store = Undefined
+// if in tabular part ItemList have only one store then in document header Store = ItemList.Store
 Function ChangeStoreInHeaderByStoresInListExecute(Options) Export
-	// сделаем массив с кладов только с уникальными значениями
+	// create array of stores with unique values
 	ArrayOfStoresUnique = New Array();
 	For Each Row In Options.ArrayOfStoresInList Do
-		IsService = ModelServer_V2.ExtractDataItemKeyIsServiceServerImp(Row.ItemKey);
-		If IsService Then
+		If Row.IsService Then
 			Continue;
 		EndIf;
+		
 		If ArrayOfStoresUnique.Find(Row.Store) = Undefined Then
 			ArrayOfStoresUnique.Add(Row.Store);
 		EndIf;
@@ -913,6 +1157,18 @@ Function ChangeStoreInHeaderByStoresInListExecute(Options) Export
 	EndIf;
 EndFunction
 	
+#EndRegion
+
+#Region CONVERT_QUANTITY_IN_QUANTITY_IN_BASE_UNIT
+
+Function CovertQuantityToQuantityInBaseUnitOptions() Export
+	Return GetChainLinkOptions("Bundle, Unit, Quantity");
+EndFunction
+
+Function CovertQuantityToQuantityInBaseUnitExecute(Options) Export
+	Return ModelServer_V2.ConvertQuantityToQuantityInBaseUnit(Options.Bundle, Options.Unit, Options.Quantity);
+EndFunction
+
 #EndRegion
 
 #Region TAXES
@@ -928,21 +1184,20 @@ Function ChangeTaxAmountAsManualAmountExecute(Options) Export
 	Return Options.TaxAmount;
 EndFunction
 
-// TaxesCache - строка XML из реквизита формы
+// TaxesCache - XML string from form attribute
 Function RequireCallCreateTaxesFormControlsOptions() Export
 	Return GetChainLinkOptions("Ref, Date, Company, ArrayOfTaxInfo, FormTaxColumnsExists");
 EndFunction
 
-// возвращает true если нужно создать элементы формы для отображения налогов
+// return true if need create form controls for taxes
 Function RequireCallCreateTaxesFormControlsExecute(Options) Export
 	If Not Options.FormTaxColumnsExists = True Then
-		Return True; // на форме нет колонок надо создавать
+		Return True; // controls is not created yet
 	EndIf;
 	If Not Options.ArrayOfTaxInfo.Count() Then
-		Return True; // кэш пустой надо создавать колонки
+		Return True; // cache is empty
 	EndIf;
-	// свравнивает необходимые налоги и налоги в кэше, если они совпадают возвращает false (не нужно пересоздавать колонки)
-	// если не совпадут возвращает true (нужно пересоздать колонки на форме)
+	// compares required taxes and taxes in cache, if they match return false
 	TaxesInCache = New Array();
 	For Each TaxInfo In Options.ArrayOfTaxInfo Do
 		TaxesInCache.Add(TaxInfo.Tax);
@@ -957,20 +1212,19 @@ Function RequireCallCreateTaxesFormControlsExecute(Options) Export
 	EndDo;
 	For Each Tax In RequiredTaxes Do
 		If TaxesInCache.Find(Tax) = Undefined Then
-			Return True; // не все необходимые налогив кэше
+			Return True; // not all required taxes in cache
 		EndIf;
 	EndDo;
 	For Each Tax In TaxesInCache Do
 		If RequiredTaxes.Find(Tax) = Undefined Then
-			Return True; // в кэше есть лишние налоги
+			Return True; // extra taxes in cache
 		EndIf;
 	EndDo;
-	Return False; // в кэше все налоги и нет лишних
+	Return False; // full match cache and required taxes
 EndFunction
 
 Function ChangeTaxRateOptions() Export
-	Return GetChainLinkOptions("Date, Company, Agreement, ItemKey, TaxRates, ArrayOfTaxInfo, Ref, 
-		|ChangeOnlyWhenAgreementIsFilled, IsBasedOn, TaxList");
+	Return GetChainLinkOptions("Date, Company, Agreement, ItemKey, TaxRates, ArrayOfTaxInfo, Ref, IsBasedOn, TaxList");
 EndFunction
 
 Function ChangeTaxRateExecute(Options) Export
@@ -979,8 +1233,8 @@ Function ChangeTaxRateExecute(Options) Export
 		Result.Insert(TaxRate.Key, TaxRate.Value);
 	EndDo;
 	
-	// при вводе на основании когда заполнен TaxList ничего не пересчитываем,
-	// ставки налогов берем из TaxList 
+	// when BasedOn = True and TaxList is filled, do not recalculate
+	// tax rates get from TaxList 
 	If Options.IsBasedOn = True And Options.TaxList.Count() Then
 		For Each KeyValue In Result Do
 			TaxRef = Undefined;
@@ -1005,12 +1259,8 @@ Function ChangeTaxRateExecute(Options) Export
 		EndDo;
 		Return Result;
 	EndIf;
-	
-	If Options.ChangeOnlyWhenAgreementIsFilled = True And Not ValueIsFilled(Options.Agreement) Then
-		Return Result;
-	EndIf;
-	
-	// налоги которые учитываются по организации на дату документа
+		
+	// taxes when have in company by document date
 	DocumentName = Options.Ref.Metadata().Name;
 	AllTaxes = TaxesServer.GetTaxesByCompany(Options.Date, Options.Company);
 	RequiredTaxes = New Array();
@@ -1025,7 +1275,7 @@ Function ChangeTaxRateExecute(Options) Export
 			Continue;
 		EndIf;
 		
-		// Если налог не учитывается организацией то очистим ставку налога TaxRate = Undefined
+		// If tax is not taken into account by company, then clear tax rate TaxRate = Undefined
 		If RequiredTaxes.Find(ItemOfTaxInfo.Tax) = Undefined Then
 			Result.Insert(ItemOfTaxInfo.Name, Undefined);
 			Continue;
@@ -1088,7 +1338,9 @@ Function CalculationsOptions() Export
 	Options.Insert("QuantityOptions", QuantityOptions);
 	
 	// SpecialOffers columns: Key, Offer, Amount, Percent
-	OffersOptions = New Structure("SpecialOffers", New Array());
+	OffersOptions = New Structure();
+	OffersOptions.Insert("SpecialOffers"      , New Array());
+	OffersOptions.Insert("SpecialOffersCache" , New Array());
 	Options.Insert("OffersOptions", OffersOptions);
 	
 	// TotalAmount
@@ -1113,7 +1365,8 @@ Function CalculationsOptions() Export
 	Options.Insert("CalculateQuantityInBaseUnit" , New Structure("Enable", False));
 	
 	// SpecialOffers
-	Options.Insert("CalculateSpecialOffers" , New Structure("Enable", False));
+	Options.Insert("CalculateSpecialOffers"   , New Structure("Enable", False));
+	Options.Insert("RecalculateSpecialOffers" , New Structure("Enable", False));
 	
 	Return Options;
 EndFunction
@@ -1125,10 +1378,6 @@ EndFunction
 Function CalculationsExecute(Options) Export
 	IsCalculatedRow = Not Options.AmountOptions.DontCalculateRow;
 
-//	If Actions.Property("RecalculateAppliedOffers") Then
-//		RecalculateAppliedOffers(Object, ItemRow, AddInfo);
-//	EndIf;
-
 	Result = New Structure();
 	Result.Insert("NetAmount"    , Options.AmountOptions.NetAmount);
 	Result.Insert("OffersAmount" , Options.AmountOptions.OffersAmount);
@@ -1138,12 +1387,36 @@ Function CalculationsExecute(Options) Export
 	Result.Insert("TaxRates"     , Options.TaxOptions.TaxRates);
 	Result.Insert("TaxList"      , New Array());
 	Result.Insert("QuantityInBaseUnit" , Options.QuantityOptions.QuantityInBaseUnit);
+	Result.Insert("SpecialOffers", New Array());
+	
+	For Each OfferRow In Options.OffersOptions.SpecialOffers Do
+		NewOfferRow = New Structure("Key, Offer, Amount, Percent");
+		FillPropertyValues(NewOfferRow, OfferRow);
+		Result.SpecialOffers.Add(NewOfferRow);
+	EndDo;
+	
+	// RecalculateSpecialOffers
+	If Options.RecalculateSpecialOffers.Enable Then
+		For Each OfferRow In Options.OffersOptions.SpecialOffersCache Do
+			Amount = 0;
+			If Options.PriceOptions.Quantity = OfferRow.Quantity Then
+				Amount = OfferRow.Amount;
+			Else
+				Amount = (OfferRow.Amount / OfferRow.Quantity) * Options.PriceOptions.Quantity;
+			EndIf;
+			For Each ResultOfferRow In Result.SpecialOffers Do
+				If OfferRow.Key = ResultOfferRow.Key And OfferRow.Offer = ResultOfferRow.Offer Then
+					ResultOfferRow.Amount = Amount;
+				EndIf;
+			EndDo;
+		EndDo;
+	EndIf;
 	
 	// CalculateSpecialOffers
 	If Options.CalculateSpecialOffers.Enable Then
 		TotalOffers = 0;
-		For Each Row In Options.OffersOptions.SpecialOffers Do
-			TotalOffers = TotalOffers + Row.Amount;
+		For Each OfferRow In Result.SpecialOffers Do
+			TotalOffers = TotalOffers + OfferRow.Amount;
 		EndDo;
 		Result.OffersAmount = TotalOffers;
 	EndIf;
@@ -1156,6 +1429,12 @@ Function CalculationsExecute(Options) Export
 			UnitFactor = GetItemInfo.GetUnitFactor(Options.QuantityOptions.ItemKey, Options.QuantityOptions.Unit);
 		EndIf;
 		Result.QuantityInBaseUnit = Options.QuantityOptions.Quantity * UnitFactor;
+	EndIf;
+	
+	If Not IsCalculatedRow Then
+		For Each Row In Options.TaxOptions.TaxList Do
+			Result.TaxList.Add(Row);
+		EndDo;
 	EndIf;
 	
 	If Options.TaxOptions.PriceIncludeTax <> Undefined Then
@@ -1174,7 +1453,7 @@ Function CalculationsExecute(Options) Export
 				Result.TotalAmount = CalculateTotalAmount_PriceIncludeTax(Options.PriceOptions, Result);
 			EndIf;
 
-			If Options.CalculateTaxAmount.Enable And IsCalculatedRow Then
+			If Options.CalculateTaxAmount.Enable And (IsCalculatedRow Or Options.TaxOptions.IsAlreadyCalculated = True) Then
 				CalculateTaxAmount(Options, Options.TaxOptions, Result, False, False);
 			EndIf;
 
@@ -1203,7 +1482,7 @@ Function CalculationsExecute(Options) Export
 				Result.NetAmount = CalculateNetAmount_PriceNotIncludeTax(Options.PriceOptions, Result);
 			EndIf;
 
-			If Options.CalculateTaxAmount.Enable And IsCalculatedRow Then
+			If Options.CalculateTaxAmount.Enable And (IsCalculatedRow Or Options.TaxOptions.IsAlreadyCalculated = True) Then
 				CalculateTaxAmount(Options, Options.TaxOptions, Result, False, False);
 			EndIf;
 
@@ -1221,7 +1500,7 @@ Function CalculationsExecute(Options) Export
 			(Result.TotalAmount - Result.TaxAmount) / Options.PriceOptions.Quantity);
 		EndIf;
 		
-		If Options.CalculateTaxAmount.Enable And IsCalculatedRow Then
+		If Options.CalculateTaxAmount.Enable And (IsCalculatedRow Or Options.TaxOptions.IsAlreadyCalculated = True) Then
 			CalculateTaxAmount(Options, Options.TaxOptions, Result, False, True);
 		EndIf;
 
@@ -1249,18 +1528,6 @@ Function CalculationsExecute(Options) Export
 			Result.TotalAmount = CalculateTotalAmount_PriceNotIncludeTax(Options.PriceOptions, Result);
 		EndIf;
 	EndIf;
-	
-//	If Actions.Property("UpdateInfoString") Then
-//		UpdateInfoString(ItemRow);
-//	EndIf;
-//
-//	If Actions.Property("UpdateInfoStringWithOffers") Then
-//		UpdateInfoStringWithOffers(Object, ItemRow, AddInfo);
-//	EndIf;
-//
-//	If Actions.Property("UpdateBarcode") Then
-//		UpdateBarcode(Object, ItemRow, AddInfo);
-//	EndIf;
 	Return Result;
 EndFunction
 
@@ -1299,20 +1566,27 @@ EndFunction
 Function _CalculateAmount(PriceOptions, Result)
 	If PriceOptions.PriceType <> Undefined And PriceOptions.QuantityInBaseUnit <> Undefined 
 		And PriceOptions.PriceType = PredefinedValue("Catalog.PriceTypes.ManualPriceType") Then
-		
-		Return PriceOptions.Price * PriceOptions.QuantityInBaseUnit;
+		Return Result.Price * PriceOptions.QuantityInBaseUnit;
 	ElsIf PriceOptions.Quantity <> Undefined Then
-		Return PriceOptions.Price * PriceOptions.Quantity;
+		Return Result.Price * PriceOptions.Quantity;
 	EndIf;
 	Return Result.TotalAmount;
 EndFunction
 
 Procedure CalculateTaxAmount(Options, TaxOptions, Result, IsReverse, IsManualPriority, PriceIncludeTax = False)
-	//
 	If TaxOptions.IsAlreadyCalculated = True Then
 		TaxAmount = 0;
 		For Each Row In TaxOptions.TaxList Do
-			Result.TaxList.Add(Row);
+			ResultRowIsExists = False;
+			For Each ResultRow In Result.TaxList Do
+				If ResultRow.Key = Row.Key And ResultRow.Tax = Row.Tax Then
+					ResultRowIsExists = True;
+					Break;
+				EndIf;
+			EndDo;
+			If Not ResultRowIsExists Then
+				Result.TaxList.Add(Row);
+			EndIf;
 			If Row.IncludeToTotalAmount Then
 				TaxAmount = Round(TaxAmount + Row.ManualAmount, 2);
 			EndIf;
@@ -1321,7 +1595,6 @@ Procedure CalculateTaxAmount(Options, TaxOptions, Result, IsReverse, IsManualPri
 		Return;
 	EndIf;
 	
-	//
 	ArrayOfTaxInfo = TaxOptions.ArrayOfTaxInfo;
 	If TaxOptions.ArrayOfTaxInfo = Undefined Then
 		Return;
@@ -1331,7 +1604,7 @@ Procedure CalculateTaxAmount(Options, TaxOptions, Result, IsReverse, IsManualPri
 	For Each ItemOfTaxInfo In ArrayOfTaxInfo Do
 		If ItemOfTaxInfo.Type = PredefinedValue("Enum.TaxType.Rate") 
 			And Not ValueIsFilled(Result.TaxRates[ItemOfTaxInfo.Name]) Then
-			// ставка налога в строке не заполнена
+			// tax rate in row is not filled
 			Continue;
 		EndIf;
 		
@@ -1404,25 +1677,6 @@ EndProcedure
 #EndRegion
 
 #Region _EXTRACT_DATA_
-
-Function ExtractDataItemKeyIsServiceOptions() Export
-	Return GetChainLinkOptions("ItemKey, IsUserChange");
-EndFunction
-
-Function ExtractDataItemKeyIsServiceExecute(Options) Export
-	If Not Options.IsUserChange = True Then
-		Return Undefined;
-	EndIf;
-	Return ModelServer_V2.ExtractDataItemKeyIsServiceServerImp(Options.Itemkey);
-EndFunction
-
-Function ExtractDataItemKeysWithSerialLotNumbersOptions() Export
-	Return GetChainLinkOptions("ItemKey");
-EndFunction
-
-Function ExtractDataItemKeysWithSerialLotNumbersExecute(Options) Export
-	Return ModelServer_V2.ExtractDataItemKeysWithSerialLotNumbersImp(Options.Itemkey);
-EndFunction
 
 Function ExtractDataAgreementApArPostingDetailOptions() Export
 	Return GetChainLinkOptions("Agreement");
@@ -1688,8 +1942,8 @@ Function ClearByTransactionTypeBankPaymentExecute(Options) Export
 	Outgoing_PaymentToVendor   = PredefinedValue("Enum.OutgoingPaymentTransactionTypes.PaymentToVendor");
 	Outgoing_ReturnToCustomer  = PredefinedValue("Enum.OutgoingPaymentTransactionTypes.ReturnToCustomer");
 	
-	// список реквизитов которые не надо очищать
-	// PlanningTransactionBasis, BasisDocument, Order - очищаются всегда
+	// list of properties which not needed clear
+	// PlanningTransactionBasis, BasisDocument, Order - clearing always
 	If Options.TransactionType = Outgoing_CashTransferOrder Then
 		StrByType = "";
 	ElsIf Options.TransactionType = Outgoing_CurrencyExchange Then
@@ -1705,7 +1959,7 @@ Function ClearByTransactionTypeBankPaymentExecute(Options) Export
 	
 	ArrayOfAttributes = New Array();
 	For Each ArrayItem In StrSplit(StrByType, ",") Do
-		ArrayOfAttributes.Add(StrReplace(TrimAll(ArrayItem),Chars.NBSp,""));
+		ArrayOfAttributes.Add(StrReplace(TrimAll(ArrayItem), Chars.NBSp, ""));
 	EndDo;
 	
 	For Each KeyValue In Result Do
@@ -1756,8 +2010,8 @@ Function ClearByTransactionTypeBankReceiptExecute(Options) Export
 	Incoming_ReturnFromVendor    = PredefinedValue("Enum.IncomingPaymentTransactionType.ReturnFromVendor");
 	Incoming_TransferFromPOS     = PredefinedValue("Enum.IncomingPaymentTransactionType.TransferFromPOS");
 	
-	// список реквизитов которые не надо очищать
-	// PlanningTransactionBasis, BasisDocument, Order - очищаются всегда
+	// list of properties which not needed clear
+	// PlanningTransactionBasis, BasisDocument, Order - clearing always
 	If Options.TransactionType = Incoming_CashTransferOrder Then
 		StrByType = "";
 	ElsIf Options.TransactionType = Incoming_CurrencyExchange Then
@@ -1778,7 +2032,7 @@ Function ClearByTransactionTypeBankReceiptExecute(Options) Export
 	
 	ArrayOfAttributes = New Array();
 	For Each ArrayItem In StrSplit(StrByType, ",") Do
-		ArrayOfAttributes.Add(StrReplace(TrimAll(ArrayItem),Chars.NBSp,""));
+		ArrayOfAttributes.Add(StrReplace(TrimAll(ArrayItem), Chars.NBSp, ""));
 	EndDo;
 	
 	For Each KeyValue In Result Do
@@ -1820,8 +2074,8 @@ Function ClearByTransactionTypeCashPaymentExecute(Options) Export
 	Outgoing_PaymentToVendor   = PredefinedValue("Enum.OutgoingPaymentTransactionTypes.PaymentToVendor");
 	Outgoing_ReturnToCustomer  = PredefinedValue("Enum.OutgoingPaymentTransactionTypes.ReturnToCustomer");
 
-	// список реквизитов которые не надо очищать
-	// PlanningTransactionBasis, BasisDocument, Order - очищаются всегда
+	// list of properties which not needed clear
+	// PlanningTransactionBasis, BasisDocument, Order - clearing always
 	If Options.TransactionType = Outgoing_CashTransferOrder Then
 		StrByType = "";
 	ElsIf Options.TransactionType = Outgoing_CurrencyExchange Then
@@ -1837,7 +2091,7 @@ Function ClearByTransactionTypeCashPaymentExecute(Options) Export
 	
 	ArrayOfAttributes = New Array();
 	For Each ArrayItem In StrSplit(StrByType, ",") Do
-		ArrayOfAttributes.Add(StrReplace(TrimAll(ArrayItem),Chars.NBSp,""));
+		ArrayOfAttributes.Add(StrReplace(TrimAll(ArrayItem), Chars.NBSp, ""));
 	EndDo;
 	
 	For Each KeyValue In Result Do
@@ -1883,8 +2137,8 @@ Function ClearByTransactionTypeCashReceiptExecute(Options) Export
 	Incoming_PaymentFromCustomer = PredefinedValue("Enum.IncomingPaymentTransactionType.PaymentFromCustomer");
 	Incoming_ReturnFromVendor    = PredefinedValue("Enum.IncomingPaymentTransactionType.ReturnFromVendor");
 	
-	// список реквизитов которые не надо очищать
-	// PlanningTransactionBasis, BasisDocument, Order - очищаются всегда
+	// list of properties which not needed clear
+	// PlanningTransactionBasis, BasisDocument, Order - clearing always
 	If Options.TransactionType = Incoming_CashTransferOrder Then
 		StrByType = "";
 	ElsIf Options.TransactionType = Incoming_CurrencyExchange Then
@@ -1902,7 +2156,7 @@ Function ClearByTransactionTypeCashReceiptExecute(Options) Export
 	
 	ArrayOfAttributes = New Array();
 	For Each ArrayItem In StrSplit(StrByType, ",") Do
-		ArrayOfAttributes.Add(StrReplace(TrimAll(ArrayItem),Chars.NBSp,""));
+		ArrayOfAttributes.Add(StrReplace(TrimAll(ArrayItem), Chars.NBSp, ""));
 	EndDo;
 	
 	For Each KeyValue In Result Do
@@ -1934,18 +2188,30 @@ EndFunction
 
 #EndRegion
 
+#Region LOAD_TABLE
+
+Function LoadTableOptions() Export
+	Return GetChainLinkOptions("TableAddress");
+EndFunction
+
+Function LoadTableExecute(Options) Export
+	Return Options.TableAddress;
+EndFunction
+
+#EndRegion
+
 Procedure InitEntryPoint(StepNames, Parameters)
-	If Not Parameters.Property("ModelInveronment") Then
-		Inveronment = New Structure();
-		Inveronment.Insert("FirstStepNames"  , StepNames);
-		Inveronment.Insert("StepNamesCounter", New Array());
-		Inveronment.Insert("AlreadyExecutedSteps"   , New Array());
-		Parameters.Insert("ModelInveronment", Inveronment)
+	If Not Parameters.Property("ModelEnvironment") Then
+		Environment = New Structure();
+		Environment.Insert("FirstStepNames"  		, StepNames);
+		Environment.Insert("StepNamesCounter"		, New Array());
+		Environment.Insert("AlreadyExecutedSteps"   , New Map());
+		Parameters.Insert("ModelEnvironment"		, Environment)
 	EndIf;
 EndProcedure
 
 Procedure DestroyEntryPoint(Parameters)
-	If Parameters.Property("ModelInveronment") Then
-		Parameters.Delete("ModelInveronment");
+	If Parameters.Property("ModelEnvironment") Then
+		Parameters.Delete("ModelEnvironment");
 	EndIf;
 EndProcedure

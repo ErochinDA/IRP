@@ -50,6 +50,16 @@ Function DeserializeJSONUseXDTO(Value, AddInfo = Undefined) Export
 	Return Result;
 EndFunction
 
+Function SerializeJSONUseXDTOFactory(Value, AddInfo = Undefined) Export
+	Writer = New JSONWriter();
+	Writer.SetString();
+	XDTOFactory.WriteJSON(Writer, Value);
+	ResultTmp = Writer.Close();
+	Object = DeserializeJSON(ResultTmp, True, AddInfo);
+	Result = SerializeJSON(Object.Get("#value"), AddInfo);
+	Return Result;
+EndFunction
+
 Function SerializeXMLUseXDTOFactory(Value, LocalName = Undefined, URI = Undefined, AddInfo = Undefined,
 	WSName = Undefined) Export
 	Writer = New XMLWriter();
@@ -71,10 +81,21 @@ Function XDTOFactoryObject(WSName = Undefined) Export
 	EndIf;
 EndFunction
 
-Function DeserializeJSON(Value, AddInfo = Undefined) Export
+Function DeserializeJSON(Value, IsMap = False, AddInfo = Undefined) Export
 	Reader = New JSONReader();
 	Reader.SetString(Value);
-	Result = ReadJSON(Reader);
+	Result = ReadJSON(Reader, IsMap);
+	Reader.Close();
+	Return Result;
+EndFunction
+
+Function DeserializeJSONUseXDTOFactory(Value, Type = Undefined, AddInfo = Undefined, WSName = Undefined) Export
+	
+	ValueTmp = "{""#value"":" + Value + "}";
+	
+	Reader = New JSONReader();
+	Reader.SetString(ValueTmp);
+	Result = XDTOFactory.ReadJSON(Reader, Type);
 	Reader.Close();
 	Return Result;
 EndFunction
@@ -132,6 +153,30 @@ Function XSLTransformation(XML, XSLT) Export
 	XSLTransform = New XSLTransform();
 	XSLTransform.LoadFromString(XSLT);
 	Return XSLTransform.TransformFromString(XML);
+EndFunction
+
+// Get style by name.
+// 
+// Parameters:
+//  Name - String - Name
+// 
+// Returns:
+//  Color
+Function GetStyleByName(Name) Export
+	Return StyleColors[Name];
+EndFunction
+
+Function GetMD5(Object) Export
+	DataToString = ValueToStringInternal(Object);
+	DataHashing = New DataHashing(HashFunction.MD5);
+	DataHashing.Append(DataToString);
+	HashSumString = StrReplace(String(DataHashing.HashSum), " ", "");
+	HashSumStringUUID = Left(HashSumString, 8) 	  + "-" + 
+						Mid(HashSumString, 9, 4)  + "-" + 
+						Mid(HashSumString, 15, 4) + "-" + 
+						Mid(HashSumString, 18, 4) + "-" + 
+						Right(HashSumString, 12);
+	Return Upper(HashSumStringUUID);
 EndFunction
 
 #Region QueryBuilder

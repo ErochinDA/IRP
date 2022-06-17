@@ -1,6 +1,8 @@
-Procedure EditMultilineText(ItemName, Form, AddInfo = Undefined) Export
-	OpenForm("CommonForm.EditMultilineText", New Structure("ItemName", ItemName), Form, , , ,
-		New NotifyDescription("OnEditedMultilineTextEnd", ThisObject, New Structure("Form, ItemName", Form, ItemName)),
+
+Procedure EditMultilineText(Form, Item, StandardProcessing) Export
+	StandardProcessing = False;
+	OpenForm("CommonForm.EditMultilineText", New Structure("ItemName", Item.Name), Form, , , ,
+		New NotifyDescription("OnEditedMultilineTextEnd", ThisObject, New Structure("Form, ItemName", Form, Item.Name)),
 		FormWindowOpeningMode.LockOwnerWindow);
 EndProcedure
 
@@ -17,14 +19,18 @@ EndProcedure
 
 // Procedure wich add string In table, or add quantity to exist one
 // 
-// Parameters SettingsInfo - structure:
-// 	RowData       - collection  - wich add In table
-// 	Object        - table owner - any object, wich have table  
-// 	Settings      - stucture    
-// 		Name      - String	     - table name
-// 		Search    - Array		 - column name, for search row
-// 		AddNewRow - boolean  - always And New row 
-// 	AddInfo       - any		 - any additional info
+// Parameters:
+//  SettingsInfo - Structure:
+//  	* RowData       - Structure  - wich add In table
+//  	* Object        - DocumentObject, CatalogObject - any object, wich have table
+// 		* Settings      - Structure
+// 		* Name      - String	     - table name
+// 		* Search    - Array of String		 - column name, for search row
+// 		* AddNewRow - Boolean  - always And New row
+//  AddInfo - Undefined - Add info
+// 
+// Returns:
+//  ValueTableRow
 Function AddRowAtObjectTable(SettingsInfo, AddInfo = Undefined) Export
 	Table = SettingsInfo.Object[SettingsInfo.Settings.Name];
 

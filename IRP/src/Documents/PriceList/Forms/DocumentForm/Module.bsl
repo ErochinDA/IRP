@@ -6,6 +6,23 @@ Procedure OnCreateAtServer(Cancel, StandardProcessing)
 	DocumentsServer.OnCreateAtServer(Object, ThisObject, Cancel, StandardProcessing);
 	BuildForm();
 	SetVisible();
+	
+	NotIsUseItemKey = Not FOServer.IsUseItemKey();
+	NotIsUsePriceByProperties = Not FOServer.IsUsePriceByProperties();
+	If NotIsUseItemKey Or NotIsUsePriceByProperties Then
+		ArrayForDelete = New Array();
+		For Each ListItem In Items.PriceListType.ChoiceList Do
+			If NotIsUseItemKey And ListItem.Value = Enums.PriceListTypes.PriceByItemKeys Then
+				ArrayForDelete.Add(ListItem);
+			EndIf;
+			If NotIsUsePriceByProperties And ListItem.Value = Enums.PriceListTypes.PriceByProperties Then
+				ArrayForDelete.Add(ListItem);
+			EndIf;
+		EndDo;
+		For Each ArrayItem In ArrayForDelete Do
+			Items.PriceListType.ChoiceList.Delete(ArrayItem);
+		EndDo;
+	EndIf;
 EndProcedure
 
 &AtClient
@@ -138,6 +155,20 @@ EndProcedure
 &AtClient
 Procedure ItemKeyListItemEditTextChange(Item, Text, StandardProcessing)
 	DocPriceListClient.ItemKeyListItemEditTextChange(Object, ThisObject, Item, Text, StandardProcessing);
+EndProcedure
+
+&AtClient
+Procedure ItemKeyListItemOnChange(Item)
+	CurrentData = Items.ItemKeyList.CurrentData;
+	If CurrentData = Undefined Then
+		Return;
+	EndIf;
+	CurrentItemKey = CurrentData.ItemKey;
+	CurrentData.ItemKey = CatItemsServer.GetItemKeyByItem(CurrentData.Item);
+	If CurrentItemKey <> CurrentData.ItemKey Then
+		CurrentData.InputUnit = GetInputUnit(CurrentData.ItemKey);
+		CurrentData.Price = CalculatePrice(CurrentData.InputPrice, CurrentData.InputUnit);
+	EndIf;
 EndProcedure
 
 &AtClient
@@ -300,9 +331,9 @@ EndProcedure
 
 &AtClient
 Procedure SearchByBarcodeEnd(Result, AdditionalParameters) Export
-	If AdditionalParameters.FoundedItems.Count() Then
+	If Result.FoundedItems.Count() Then
 		SetVisible();
-		ItemData = AdditionalParameters.FoundedItems[0];
+		ItemData = Result.FoundedItems[0];
 		If Object.PriceListType = PredefinedValue("Enum.PriceListTypes.PriceByItemKeys") Then
 			SearchInItemKeyList = Object.ItemKeyList.FindRows(New Structure("ItemKey", ItemData.ItemKey));
 			If SearchInItemKeyList.Count() Then
@@ -331,7 +362,7 @@ Procedure SearchByBarcodeEnd(Result, AdditionalParameters) Export
 			Return;
 		EndIf;
 	Else
-		CommonFunctionsClientServer.ShowUsersMessage(StrTemplate(R().S_019, StrConcat(AdditionalParameters.Barcodes, ",")));
+		CommonFunctionsClientServer.ShowUsersMessage(StrTemplate(R().S_019, StrConcat(Result.Barcodes, ",")));
 	EndIf;
 EndProcedure
 #EndRegion
@@ -747,3 +778,5 @@ EndProcedure
 Procedure ShowHiddenTables(Command)
 	DocumentsClient.ShowHiddenTables(Object, ThisObject);
 EndProcedure
+
+

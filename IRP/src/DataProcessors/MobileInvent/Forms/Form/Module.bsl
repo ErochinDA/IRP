@@ -1,7 +1,21 @@
+
+#Region FormEvent
+
+&AtClient
+Procedure OnOpen(Cancel)
+	HideWhenMobileEmulatorBarcode();
+	BarcodeHasAnyCharactersOnChange(Undefined);
+EndProcedure
+
+#EndRegion
+
+#Region Barcode
 &AtClient
 Procedure SearchByBarcode(Command, Barcode = "")
-	AddInfo = New Structure("MobileModule", ThisObject);
-	DocumentsClient.SearchByBarcode(Barcode, DocumentObject, ThisObject, ThisObject, , AddInfo);
+	Settings = BarcodeClient.GetBarcodeSettings();
+	//@skip-warning
+	Settings.MobileBarcodeModule = ThisObject;
+	DocumentsClient.SearchByBarcode(Barcode, Object, ThisObject, ThisObject, , Settings);
 EndProcedure
 
 &AtClient
@@ -18,37 +32,134 @@ Procedure InputBarcode(Command)
 EndProcedure
 
 &AtClient
+Procedure ScanEmulatorOnChange(Item)
+	HideWhenMobileEmulatorBarcode();
+EndProcedure
+
+&AtClient
+Procedure HideWhenMobileEmulatorBarcode()
+	Items.InputBarcode.Visible = Not ScanEmulator;
+	Items.SearchByBarcode.Visible = Not ScanEmulator;
+	Items.GroupInputBarcode.Visible = ScanEmulator;
+EndProcedure
+
+&AtClient
+Procedure BarcodeInputOnChange(Item)
+	ManualInputBarcode(BarcodeInput);
+EndProcedure
+
+&AtClient
 Procedure AddBarcodeAfterEnd(Number, AdditionalParameters) Export
 	If Not ValueIsFilled(Number) Then
 		Return;
 	EndIf;
-	SearchByBarcode(Undefined, Format(Number, "NG="));
+	Barcode = Format(Number, "NG=");
+	ManualInputBarcode(Barcode);
 EndProcedure
+
+&AtClient
+Procedure ManualInputBarcode(Barcode)
+	If Object.Ref.IsEmpty() Then
+		DocumentIsSet = False;
+		Message = FindAndSetDocument(Barcode, DocumentIsSet);
+		If Not DocumentIsSet Then
+			CommonFunctionsClientServer.ShowUsersMessage(Message);
+		EndIf;
+		BarcodeInput = "";
+		AttachIdleHandler("BeginEditBarcode", 0.1, True);
+		Return;
+	EndIf;
+	SearchByBarcode(Undefined, Barcode);
+EndProcedure
+
+
 &AtClient
 Procedure SearchByBarcodeEnd(Result, AdditionalParameters) Export
+	Info = "";
+	If Object.Ref.IsEmpty() Then
+		CommonFunctionsClientServer.ShowUsersMessage(R().InfoMessage_025, "DocumentRef");
+	EndIf;
+	
+	For Each Row In Result.FoundedItems Do
+		
+		If Row.isService Then
+			CommonFunctionsClientServer.ShowUsersMessage(StrTemplate(R().InfoMessage_026, Row.Item));
+			BarcodeClient.CloseMobileScanner();
+			AttachIdleHandler("BeginEditBarcode", 0.1, True);
+			Return;
+		EndIf;
+		
+		NewRow = Object.ItemList.Insert(0);
+		Items.ItemList.CurrentRow = Object.ItemList[0].GetID();
 
-	NotifyParameters = New Structure();
-	NotifyParameters.Insert("Form", ThisObject);
-	NotifyParameters.Insert("Object", DocumentObject);
-
-	For Each Row In AdditionalParameters.FoundedItems Do
-		NewRow = DocumentObject.ItemList.Add();
+		NewRow.Key = New UUID;
 		FillPropertyValues(NewRow, Row);
 		NewRow.PhysCount = Row.Quantity;
+		NewRow.Barcode = Result.Barcodes[0];
+		NewRow.Date = CurrentDate();
+		
+		If Row.UseSerialLotNumber And NewRow.SerialLotNumber.IsEmpty() Then
+			BarcodeClient.CloseMobileScanner();		
+			StartEditQuantity(NewRow.GetID(), True);	
+			If ScanEmulator Then
+				BarcodeInput = "";			
+				AttachIdleHandler("BeginEditBarcode", 0.1, True);	
+			EndIf;
+		EndIf;
 	EndDo;
-	If AdditionalParameters.FoundedItems.Count() Then
+	
+	If Result.FoundedItems.Count() Then
 		If RuleEditQuantity Then
 			BarcodeClient.CloseMobileScanner();
 			StartEditQuantity(NewRow.GetID(), True);
 		EndIf;
 		Write();
+		If ScanEmulator Then
+			BarcodeInput = "";				
+			AttachIdleHandler("BeginEditBarcode", 0.1, True);
+		EndIf;
+	Else
+		If ScanEmulator Then
+			Info = StrTemplate(R().S_019, Result.Barcodes[0]);
+			BarcodeInput = "";
+			AttachIdleHandler("BeginEditBarcode", 0.1, True);
+		EndIf;
 	EndIf;
 
 EndProcedure
 
 &AtClient
+Procedure BarcodeHasAnyCharactersOnChange(Item)
+	#IF MobileClient THEN
+		If BarcodeHasAnyCharacters Then
+			Items.BarcodeInput.SpecialTextInputMode = SpecialTextInputMode.Auto;
+		Else
+			Items.BarcodeInput.SpecialTextInputMode = SpecialTextInputMode.Digits;
+		EndIf;
+	#ENDIF
+EndProcedure
+
+&AtClient
+Procedure BeginEditBarcode() Export
+	ThisObject.CurrentItem = Items.BarcodeInput;
+#If MobileClient Then
+	ThisObject.BeginEditingItem();
+#EndIf
+EndProcedure
+
+// Scan barcode end mobile.
+// 
+// Parameters:
+//  Barcode - String - Barcode
+//  Result - Boolean - Result
+//  Message - String - Message
+//  Parameters - See BarcodeClient.GetBarcodeSettings
+&AtClient
 Procedure ScanBarcodeEndMobile(Barcode, Result, Message, Parameters) Export
-	If DocumentObject.Ref.IsEmpty() Then
+	
+	Message = "";
+	
+	If Object.Ref.IsEmpty() Then
 		Message = FindAndSetDocument(Barcode, Result);
 
 		If Result Then
@@ -57,12 +168,25 @@ Procedure ScanBarcodeEndMobile(Barcode, Result, Message, Parameters) Export
 	Else
 		ProcessBarcodeResult = Barcodeclient.ProcessBarcode(Barcode, Parameters);
 		If ProcessBarcodeResult Then
-			Message = R().S_018;
+			If Parameters.Result.FoundedItems[0].isService And Parameters.Filter.DisableIfIsService Then
+				Message = StrTemplate(R().InfoMessage_026, Parameters.Result.FoundedItems[0].Item);
+				Result = False;
+			Else
+				Message = R().S_018;
+			EndIf;
 		Else
 			Result = False;
 			Message = StrTemplate(R().S_019, Barcode);
 		EndIf;
 	EndIf;
+EndProcedure
+
+#EndRegion
+
+&AtClient
+Procedure OpenRow(Command)
+	RowSelected = Items.ItemList.CurrentRow;
+	StartEditQuantity(RowSelected);
 EndProcedure
 
 &AtClient
@@ -73,10 +197,16 @@ EndProcedure
 
 &AtClient
 Procedure StartEditQuantity(Val RowSelected, AutoMode = False)
+	
+	If RowSelected = Undefined Then
+		Return;
+	EndIf;
+	
 	Structure = New Structure();
-	ItemListRow = DocumentObject.ItemList.FindByID(RowSelected);
+	ItemListRow = Object.ItemList.FindByID(RowSelected);
 	Structure.Insert("ItemRef", Undefined);
 	Structure.Insert("ItemKey", ItemListRow.ItemKey);
+	Structure.Insert("SerialLotNumber", ItemListRow.SerialLotNumber);
 	Structure.Insert("Quantity", ItemListRow.PhysCount);
 	Structure.Insert("RowID", RowSelected);
 	Structure.Insert("AutoMode", AutoMode);
@@ -89,7 +219,8 @@ Procedure OnEditQuantityEnd(Result, AddInfo) Export
 	If Result = Undefined Then
 		Return;
 	EndIf;
-	ItemListRow = DocumentObject.ItemList.FindByID(Result.RowID);
+	ItemListRow = Object.ItemList.FindByID(Result.RowID);
+	ItemListRow.SerialLotNumber = Result.SerialLotNumber;
 	ItemListRow.PhysCount = Result.Quantity;
 	Write();
 EndProcedure
@@ -108,13 +239,13 @@ EndProcedure
 
 &AtClient
 Procedure InputQuantityEnd(Quantity, Parameters) Export
-	If Quantity <> DocumentObject.ItemList.Total("PhysCount") Then
+	If Quantity <> Object.ItemList.Total("PhysCount") Then
 		If Not SecondTryToInputQuantity Then
 			SecondTryToInputQuantity = True;
 			CompleteLocation();
 		Else
 			CommonFunctionsClientServer.ShowUsersMessage(R().InfoMessage_010);
-			DocumentObject.ItemList.Clear();
+			Object.ItemList.Clear();
 			Write();
 		EndIf;
 	Else
@@ -126,7 +257,7 @@ EndProcedure
 
 &AtServer
 Procedure SaveAndUpdateDocument()
-	DocumentObject.Status = Catalogs.ObjectStatuses.Complete;
+	Object.Status = Catalogs.ObjectStatuses.Complete;
 	Write();
 	FillDocumentObject(Documents.PhysicalCountByLocation.EmptyRef());
 EndProcedure
@@ -169,7 +300,7 @@ EndProcedure
 Procedure FillDocumentObject(DocRef)
 	DocumentRef = DocRef;
 	If DocumentRef.IsEmpty() Then
-		ValueToFormAttribute(Documents.PhysicalCountByLocation.CreateDocument(), "DocumentObject");
+		ValueToFormAttribute(Documents.PhysicalCountByLocation.CreateDocument(), "Object");
 		LockFormDataForEdit();
 	Else
 
@@ -186,12 +317,19 @@ Procedure FillDocumentObject(DocRef)
 
 		DocObj = DocRef.GetObject();
 
-		ValueToFormAttribute(DocObj, "DocumentObject");
+		ValueToFormAttribute(DocObj, "Object");
 
-		DocumentObject.ResponsibleUser = SessionParameters.CurrentUser;
+		Object.ResponsibleUser = SessionParameters.CurrentUser;
 		Write();
+		Items.ItemListSerialLotNumber.Visible = DocRef.PhysicalInventory.UseSerialLot;
 		CommonFunctionsClientServer.ShowUsersMessage(StrTemplate(R().InfoMessage_013, DocObj.Number));
 	EndIf;
 
-	RuleEditQuantity = DocumentObject.RuleEditQuantity;
+	RuleEditQuantity = Object.RuleEditQuantity;
+EndProcedure
+
+&AtClient
+Procedure ItemListBeforeRowChange(Item, Cancel)
+	Cancel = True;
+	StartEditQuantity(Items.ItemList.CurrentRow);
 EndProcedure

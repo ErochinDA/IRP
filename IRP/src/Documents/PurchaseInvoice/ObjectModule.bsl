@@ -8,7 +8,7 @@ Procedure BeforeWrite(Cancel, WriteMode, PostingMode)
 	CurrenciesServer.UpdateCurrencyTable(Parameters, ThisObject.Currencies);
 
 	If WriteMode = DocumentWriteMode.Posting Then
-		AccountingClientServer.BeforeWriteAccountingDocument(ThisObject, "ItemList");
+		AccountingClientServer.UpdateAccountingTables(ThisObject, "ItemList");
 	EndIf;
 
 	ThisObject.DocumentAmount = ThisObject.ItemList.Total("TotalAmount");
@@ -36,8 +36,10 @@ EndProcedure
 
 Procedure Filling(FillingData, FillingText, StandardProcessing)
 	If TypeOf(FillingData) = Type("Structure") And FillingData.Property("BasedOn") Then
-		FillPropertyValues(ThisObject, FillingData, RowIDInfoServer.GetSeperatorColumns(ThisObject.Metadata()));
-		RowIDInfoServer.AddLinkedDocumentRows(ThisObject, FillingData);
+		PropertiesHeader = RowIDInfoServer.GetSeparatorColumns(ThisObject.Metadata());
+		FillPropertyValues(ThisObject, FillingData, PropertiesHeader);
+		LinkedResult = RowIDInfoServer.AddLinkedDocumentRows(ThisObject, FillingData);
+		ControllerClientServer_V2.SetReadOnlyProperties_RowID(ThisObject, PropertiesHeader, LinkedResult.UpdatedProperties);
 	EndIf;
 EndProcedure
 
@@ -98,5 +100,4 @@ Procedure FillCheckProcessing(Cancel, CheckedAttributes)
 		ItemListTable = ThisObject.ItemList.Unload(,"Key, LineNumber, ItemKey, Store");
 		RowIDInfoServer.FillCheckProcessing(ThisObject, Cancel, LinkedFilter, RowIDInfoTable, ItemListTable);
 	EndIf;
-	
 EndProcedure

@@ -45,7 +45,7 @@ EndProcedure
 #Region ACCOUNT_SENDER
 
 Procedure SenderOnChange(Object, Form, Item) Export
-	ViewClient_V2.AccountSenerOnChange(Object, Form);
+	ViewClient_V2.AccountSenderOnChange(Object, Form);
 EndProcedure
 
 Procedure SenderEditTextChange(Object, Form, Item, Text, StandardProcessing) Export
@@ -153,38 +153,5 @@ EndProcedure
 Procedure FinancialMovementTypeEditTextChange(Object, Form, Item, Text, StandardProcessing) Export
 	DocumentsClient.FinancialMovementTypeEditTextChange(Object, Form, Item, Text, StandardProcessing);
 EndProcedure
-
-#EndRegion
-
-#Region SERVICE
-
-#Region DESCRIPTION
-
-Procedure DescriptionClick(Object, Form, Item, StandardProcessing) Export
-	StandardProcessing = False;
-	CommonFormActions.EditMultilineText(Item.Name, Form);
-EndProcedure
-
-#EndRegion
-
-#Region TITLE_DECORATIONS
-
-Procedure DecorationGroupTitleCollapsedPictureClick(Object, Form, Item) Export
-	DocumentsClientServer.ChangeTitleCollapse(Object, Form, True);
-EndProcedure
-
-Procedure DecorationGroupTitleCollapsedLabelClick(Object, Form, Item) Export
-	DocumentsClientServer.ChangeTitleCollapse(Object, Form, True);
-EndProcedure
-
-Procedure DecorationGroupTitleUncollapsedPictureClick(Object, Form, Item) Export
-	DocumentsClientServer.ChangeTitleCollapse(Object, Form, False);
-EndProcedure
-
-Procedure DecorationGroupTitleUncollapsedLabelClick(Object, Form, Item) Export
-	DocumentsClientServer.ChangeTitleCollapse(Object, Form, False);
-EndProcedure
-
-#EndRegion
 
 #EndRegion

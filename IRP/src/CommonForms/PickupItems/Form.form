@@ -516,7 +516,6 @@
           <autoMaxWidth>true</autoMaxWidth>
           <autoMaxHeight>true</autoMaxHeight>
           <placementArea>UserCmds</placementArea>
-          <toolTipRepresentation>Auto</toolTipRepresentation>
           <representationInContextMenu>Auto</representationInContextMenu>
         </items>
         <visible>true</visible>
@@ -1102,7 +1101,6 @@
           <autoMaxWidth>true</autoMaxWidth>
           <autoMaxHeight>true</autoMaxHeight>
           <placementArea>UserCmds</placementArea>
-          <toolTipRepresentation>Auto</toolTipRepresentation>
           <representationInContextMenu>Auto</representationInContextMenu>
         </items>
         <visible>true</visible>
@@ -1879,7 +1877,6 @@
       <autoMaxWidth>true</autoMaxWidth>
       <autoMaxHeight>true</autoMaxHeight>
       <placementArea>UserCmds</placementArea>
-      <toolTipRepresentation>Auto</toolTipRepresentation>
       <representationInContextMenu>Auto</representationInContextMenu>
     </items>
     <visible>true</visible>
@@ -1922,6 +1919,7 @@
     <edit>
       <common>true</common>
     </edit>
+    <functionalOptions>FunctionalOption.UseItemKey</functionalOptions>
     <columns>
       <name>ItemKey</name>
       <title>
@@ -2029,6 +2027,7 @@
       <edit>
         <common>true</common>
       </edit>
+      <functionalOptions>FunctionalOption.UseUnitsAndDimensions</functionalOptions>
     </columns>
     <columns>
       <name>InStockReceiver</name>
@@ -2074,6 +2073,23 @@
         <value>Use serial lot number</value>
       </title>
       <id>34</id>
+      <valueType>
+        <types>Boolean</types>
+      </valueType>
+      <view>
+        <common>true</common>
+      </view>
+      <edit>
+        <common>true</common>
+      </edit>
+    </columns>
+    <columns>
+      <name>isService</name>
+      <title>
+        <key>en</key>
+        <value>Is service</value>
+      </title>
+      <id>39</id>
       <valueType>
         <types>Boolean</types>
       </valueType>
@@ -2229,6 +2245,7 @@
       <edit>
         <common>true</common>
       </edit>
+      <functionalOptions>FunctionalOption.UseUnitsAndDimensions</functionalOptions>
     </columns>
     <columns>
       <name>InStockReceiver</name>
@@ -2276,6 +2293,23 @@
       <id>36</id>
       <valueType>
         <types>CatalogRef.SerialLotNumbers</types>
+      </valueType>
+      <view>
+        <common>true</common>
+      </view>
+      <edit>
+        <common>true</common>
+      </edit>
+    </columns>
+    <columns>
+      <name>isService</name>
+      <title>
+        <key>en</key>
+        <value>Is service</value>
+      </title>
+      <id>38</id>
+      <valueType>
+        <types>Boolean</types>
       </valueType>
       <view>
         <common>true</common>
@@ -2403,6 +2437,7 @@
       <edit>
         <common>true</common>
       </edit>
+      <functionalOptions>FunctionalOption.UseUnitsAndDimensions</functionalOptions>
     </columns>
     <columns>
       <name>SerialLotNumber</name>
@@ -2428,6 +2463,23 @@
         <value>Use serial lot number</value>
       </title>
       <id>32</id>
+      <valueType>
+        <types>Boolean</types>
+      </valueType>
+      <view>
+        <common>true</common>
+      </view>
+      <edit>
+        <common>true</common>
+      </edit>
+    </columns>
+    <columns>
+      <name>isService</name>
+      <title>
+        <key>en</key>
+        <value>Is service</value>
+      </title>
+      <id>37</id>
       <valueType>
         <types>Boolean</types>
       </valueType>

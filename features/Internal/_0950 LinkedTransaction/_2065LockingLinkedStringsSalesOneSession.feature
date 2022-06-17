@@ -66,25 +66,88 @@ Scenario: _2065001 preparation (locking linked strings)
 	When Create document SalesOrder and SalesInvoice objects (creation based on, SI >SO)
 	And I execute 1C:Enterprise script at server
 		| "Documents.SalesOrder.FindByNumber(32).GetObject().Write(DocumentWriteMode.Posting);" |
+	And I execute 1C:Enterprise script at server
 		| "Documents.SalesInvoice.FindByNumber(32).GetObject().Write(DocumentWriteMode.Posting);" |
 	When Create SO,SI,SC,SRO,SR (locking linked strings)
 	And I execute 1C:Enterprise script at server
 		| "Documents.SalesOrder.FindByNumber(35).GetObject().Write(DocumentWriteMode.Posting);" |
+	And I execute 1C:Enterprise script at server
 		| "Documents.SalesInvoice.FindByNumber(35).GetObject().Write(DocumentWriteMode.Posting);" |
+	And I execute 1C:Enterprise script at server
 		| "Documents.SalesReturnOrder.FindByNumber(32).GetObject().Write(DocumentWriteMode.Posting);" |
+	And I execute 1C:Enterprise script at server
 		| "Documents.SalesReturn.FindByNumber(32).GetObject().Write(DocumentWriteMode.Posting);" |
+	And I execute 1C:Enterprise script at server
 		| "Documents.ShipmentConfirmation.FindByNumber(35).GetObject().Write(DocumentWriteMode.Posting);" |
+	And I execute 1C:Enterprise script at server
 		| "Documents.ShipmentConfirmation.FindByNumber(36).GetObject().Write(DocumentWriteMode.Posting);" |
+	And I execute 1C:Enterprise script at server
 		| "Documents.SalesInvoice.FindByNumber(36).GetObject().Write(DocumentWriteMode.Posting);" |
+	And I execute 1C:Enterprise script at server
 		| "Documents.GoodsReceipt.FindByNumber(32).GetObject().Write(DocumentWriteMode.Posting);" |
 	When Create Planned receipt reservation, SO, PO (locking linked strings)
 	And I execute 1C:Enterprise script at server
 		| "Documents.SalesOrder.FindByNumber(36).GetObject().Write(DocumentWriteMode.Posting);" |
+	And I execute 1C:Enterprise script at server
 		| "Documents.PurchaseOrder.FindByNumber(36).GetObject().Write(DocumentWriteMode.Posting);" |
+	And I execute 1C:Enterprise script at server
 		| "Documents.PlannedReceiptReservation.FindByNumber(36).GetObject().Write(DocumentWriteMode.Posting);" |
-		
+
+
+Scenario: _20650011 Info linked documents row
+	And I close all client application windows
+	* Open SI
+		Given I open hyperlink "e1cib/list/Document.SalesInvoice"
+		And I go to line in "List" table
+			| 'Number' |
+			| '36'     |
+		And I select current line in "List" table
+	* Check Info linked documents row
+		And I go to line in "ItemList" table
+			| 'Item'  | 'Item key' |
+			| 'Shirt' | '36/Red'   |
+		And I activate "Locked row" field in "ItemList" table
+		And I select current line in "ItemList" table
+		And I activate "Is internal linked" field in "ItemList" table
+		And I select current line in "ItemList" table
+		Then "Info linked document rows" window is opened
+		And I expand current line in "BasisesTree" table
+		And I expand a line in "BasisesTree" table
+			| 'Doc ref'                                            | 'Row presentation'                                   |
+			| 'Shipment confirmation 36 dated 23.09.2021 10:20:59' | 'Shipment confirmation 36 dated 23.09.2021 10:20:59' |
+	* Show row key
+		And I click "Show row key" button
+		And "ResultsTable" table became equal
+			| 'Item'  | 'Item key' | 'Store'    | 'Key' | 'Basis'                                              | 'Basis unit' | 'Current step' | 'Row ref' | 'Parent basis' | 'Row ID' | 'Quantity in base unit' | 'Basis key' | 'Unit' |
+			| 'Shirt' | '36/Red'   | 'Store 02' | '*'   | 'Shipment confirmation 36 dated 23.09.2021 10:20:59' | 'pcs'        | 'SI'           | '*'       | ''             | '*'      | '10,000'                | '*'         | ''     |
+	* Try Delete row
+		And I go to line in "BasisesTree" table
+			| 'Quantity' | 'Row presentation' |
+			| '10,000'   | 'Shirt (36/Red)'   |
+		And I activate current test client window
+		And I press keyboard shortcut "Delete"
+		And "BasisesTree" table became equal
+			| 'Row presentation'                                   | 'Quantity in base unit' | 'Quantity' | 'Unit' | 'Price'  | 'Row ref' | 'Currency' | 'Basis unit' | 'Doc ref'                                            | 'Basis'                                              | 'Key'                                  | 'Row ID'                               | 'Basis key'                            | 'Current step' |
+			| 'Sales order 35 dated 23.09.2021 10:19:43'           | ''                      | ''         | ''     | ''       | ''        | ''         | ''           | 'Sales order 35 dated 23.09.2021 10:19:43'           | 'Sales order 35 dated 23.09.2021 10:19:43'           | '                                    ' | '                                    ' | '                                    ' | ''             |
+			| 'Shipment confirmation 36 dated 23.09.2021 10:20:59' | ''                      | ''         | ''     | ''       | ''        | ''         | ''           | 'Shipment confirmation 36 dated 23.09.2021 10:20:59' | 'Shipment confirmation 36 dated 23.09.2021 10:20:59' | '                                    ' | '                                    ' | '                                    ' | ''             |
+			| 'Shirt (36/Red)'                                     | '10,000'                | '10,000'   | 'pcs'  | '350,00' | '*'       | 'TRY'      | 'pcs'        | ''                                                   | 'Shipment confirmation 36 dated 23.09.2021 10:20:59' | '*'                                    | '*'                                    | '*'                                    | 'SI'           |
+	* Try copy row
+		And I go to line in "BasisesTree" table
+			| 'Quantity' | 'Row presentation' |
+			| '10,000'   | 'Shirt (36/Red)'   |
+		And I activate current test client window
+		And I press keyboard shortcut "F9"
+		And "BasisesTree" table became equal
+			| 'Row presentation'                                   | 'Quantity in base unit' | 'Quantity' | 'Unit' | 'Price'  | 'Row ref' | 'Currency' | 'Basis unit' | 'Doc ref'                                            | 'Basis'                                              | 'Key'                                  | 'Row ID'                               | 'Basis key'                            | 'Current step' |
+			| 'Sales order 35 dated 23.09.2021 10:19:43'           | ''                      | ''         | ''     | ''       | ''        | ''         | ''           | 'Sales order 35 dated 23.09.2021 10:19:43'           | 'Sales order 35 dated 23.09.2021 10:19:43'           | '                                    ' | '                                    ' | '                                    ' | ''             |
+			| 'Shipment confirmation 36 dated 23.09.2021 10:20:59' | ''                      | ''         | ''     | ''       | ''        | ''         | ''           | 'Shipment confirmation 36 dated 23.09.2021 10:20:59' | 'Shipment confirmation 36 dated 23.09.2021 10:20:59' | '                                    ' | '                                    ' | '                                    ' | ''             |
+			| 'Shirt (36/Red)'                                     | '10,000'                | '10,000'   | 'pcs'  | '350,00' | '*'       | 'TRY'      | 'pcs'        | ''                                                   | 'Shipment confirmation 36 dated 23.09.2021 10:20:59' | '*'                                    | '*'                                    | '*'                                    | 'SI'           |
+		And I close all client application windows
+				
+						
 
 Scenario: _2065002 check locking header in the SO with linked documents (one session)
+	And I close all client application windows
 	* Open SO
 		Given I open hyperlink "e1cib/list/Document.SalesOrder"
 		And I go to line in "List" table
@@ -485,11 +548,11 @@ Scenario: _2065010 change quantity in the linked string in the SO (one session)
 		And I select current line in "List" table
 	* Change quantity (less then SI)
 		And I go to line in "ItemList" table
-			| 'Item'  | 'Item key' | 'Procurement method' | 'Q'      |
+			| 'Item'  | 'Item key' | 'Procurement method' | 'Quantity'      |
 			| 'Shirt' | '36/Red'   | 'No reserve'         | '10,000' |
-		And I activate "Q" field in "ItemList" table
+		And I activate "Quantity" field in "ItemList" table
 		And I select current line in "ItemList" table
-		And I input "9,000" text in "Q" field of "ItemList" table
+		And I input "9,000" text in "Quantity" field of "ItemList" table
 		And I finish line editing in "ItemList" table
 		And I click "Post" button
 		Then "1C:Enterprise" window is opened
@@ -498,11 +561,11 @@ Scenario: _2065010 change quantity in the linked string in the SO (one session)
 			|'Line No. [3] [Shirt 36/Red] RowID movements remaining: 10 . Required: 9 . Lacking: 1 .'|
 	* Change quantity (more then SI)
 		And I go to line in "ItemList" table
-			| 'Item'  | 'Item key' | 'Procurement method' | 'Q'      |
+			| 'Item'  | 'Item key' | 'Procurement method' | 'Quantity'      |
 			| 'Shirt' | '36/Red'   | 'No reserve'         | '9,000' |
-		And I activate "Q" field in "ItemList" table
+		And I activate "Quantity" field in "ItemList" table
 		And I select current line in "ItemList" table
-		And I input "11,000" text in "Q" field of "ItemList" table
+		And I input "11,000" text in "Quantity" field of "ItemList" table
 		And I finish line editing in "ItemList" table
 		And I click "Post and close" button
 		Then user message window does not contain messages
@@ -519,11 +582,11 @@ Scenario: _2065011 change quantity in the linked string in the SI, SC after SI, 
 		And I select current line in "List" table
 	* Change quantity (less then SC, SC exist)
 		And I go to line in "ItemList" table
-			| 'Item'  | 'Item key' | 'Q'      |
+			| 'Item'  | 'Item key' | 'Quantity'      |
 			| 'Boots' | '37/18SD'  | '2,000' |
-		And I activate "Q" field in "ItemList" table
+		And I activate "Quantity" field in "ItemList" table
 		And I select current line in "ItemList" table
-		And I input "1,000" text in "Q" field of "ItemList" table
+		And I input "1,000" text in "Quantity" field of "ItemList" table
 		And I finish line editing in "ItemList" table
 		And I click "Post" button
 		Then "1C:Enterprise" window is opened
@@ -532,11 +595,11 @@ Scenario: _2065011 change quantity in the linked string in the SI, SC after SI, 
 			|'Line No. [1] [Boots 37/18SD] RowID movements remaining: 24 . Required: 12 . Lacking: 12 .'|
 	* Change quantity (more then SC, SC exist)
 		And I go to line in "ItemList" table
-			| 'Item'  | 'Item key' | 'Q'      |
+			| 'Item'  | 'Item key' | 'Quantity'      |
 			| 'Boots' | '37/18SD'  | '1,000' |
-		And I activate "Q" field in "ItemList" table
+		And I activate "Quantity" field in "ItemList" table
 		And I select current line in "ItemList" table
-		And I input "3,000" text in "Q" field of "ItemList" table
+		And I input "3,000" text in "Quantity" field of "ItemList" table
 		And I finish line editing in "ItemList" table
 		And I click "Post and close" button
 		Then user message window does not contain messages
@@ -552,22 +615,22 @@ Scenario: _2065012 change quantity in the linked string in the SI, SI after SC, 
 		And I select current line in "List" table
 	* Change quantity (more then SC, SC exist)
 		And I go to line in "ItemList" table
-			| 'Item'  | 'Item key' | 'Q'      |
+			| 'Item'  | 'Item key' | 'Quantity'      |
 			| 'Shirt' | '36/Red'  | '10,000' |
-		And I activate "Q" field in "ItemList" table
+		And I activate "Quantity" field in "ItemList" table
 		And I select current line in "ItemList" table
-		And I input "11,000" text in "Q" field of "ItemList" table
+		And I input "11,000" text in "Quantity" field of "ItemList" table
 		And I finish line editing in "ItemList" table
 		And I click "Post" button
 		Then there are lines in TestClient message log
 			|'In line 2 quantity by Shipment confirmation 36 dated 23.09.2021 10:20:59 11 greater than 10'|
 	* Change quantity (more then SC, SC exist)
 		And I go to line in "ItemList" table
-			| 'Item'  | 'Item key' | 'Q'      |
+			| 'Item'  | 'Item key' | 'Quantity'      |
 			| 'Shirt' | '36/Red'  | '11,000' |
-		And I activate "Q" field in "ItemList" table
+		And I activate "Quantity" field in "ItemList" table
 		And I select current line in "ItemList" table
-		And I input "9,000" text in "Q" field of "ItemList" table
+		And I input "9,000" text in "Quantity" field of "ItemList" table
 		And I finish line editing in "ItemList" table
 		And I click "Post and close" button
 		Then user message window does not contain messages
@@ -1168,8 +1231,8 @@ Scenario: _2065039 change quantity in the linked string in the SRO (one session)
 			| 'Item'  | 'Item key' |
 			| 'Shirt' | '36/Red'   |
 		And I select current line in "ItemList" table
-		And I activate "Q" field in "ItemList" table
-		And I input "5,000" text in "Q" field of "ItemList" table
+		And I activate "Quantity" field in "ItemList" table
+		And I input "5,000" text in "Quantity" field of "ItemList" table
 		And I click "Post" button
 		Then "1C:Enterprise" window is opened
 		And I click "OK" button
@@ -1179,9 +1242,9 @@ Scenario: _2065039 change quantity in the linked string in the SRO (one session)
 		And I go to line in "ItemList" table
 			| 'Item'  | 'Item key' |
 			| 'Shirt' | '36/Red'   |
-		And I activate "Q" field in "ItemList" table
+		And I activate "Quantity" field in "ItemList" table
 		And I select current line in "ItemList" table
-		And I input "7,000" text in "Q" field of "ItemList" table
+		And I input "7,000" text in "Quantity" field of "ItemList" table
 		And I finish line editing in "ItemList" table
 		And I click "Post and close" button
 		Then user message window does not contain messages
@@ -1201,8 +1264,8 @@ Scenario: _2065040 change quantity in the linked string in the SR (one session)
 			| 'Item'  | 'Item key' |
 			| 'Shirt' | '36/Red'   |
 		And I select current line in "ItemList" table
-		And I activate "Q" field in "ItemList" table
-		And I input "5,000" text in "Q" field of "ItemList" table
+		And I activate "Quantity" field in "ItemList" table
+		And I input "5,000" text in "Quantity" field of "ItemList" table
 		And I click "Post" button
 		Then "1C:Enterprise" window is opened
 		And I click "OK" button
@@ -1212,9 +1275,9 @@ Scenario: _2065040 change quantity in the linked string in the SR (one session)
 		And I go to line in "ItemList" table
 			| 'Item'  | 'Item key' |
 			| 'Shirt' | '36/Red'   |
-		And I activate "Q" field in "ItemList" table
+		And I activate "Quantity" field in "ItemList" table
 		And I select current line in "ItemList" table
-		And I input "7,000" text in "Q" field of "ItemList" table
+		And I input "7,000" text in "Quantity" field of "ItemList" table
 		And I finish line editing in "ItemList" table
 		And I click "Post and close" button
 		Then user message window does not contain messages
@@ -1333,8 +1396,38 @@ Scenario: _2065072 unlock linked rows
 			| 'Trousers' | '36/Yellow' |
 		And I close all client application windows
 		
-
+Scenario: _2065073 try unlink all rows in the SC (SO-SC-SI)
+	And I close all client application windows	
+	* Select SС
+		Given I open hyperlink "e1cib/list/Document.ShipmentConfirmation"
+		And I go to line in "List" table
+			| 'Number' |
+			| '36'     |
+		And I select current line in "List" table	
+	* Try unlink all rows
+		And in the table "ItemList" I click "Link unlink basis documents" button
+		Then "Link / unlink document row" window is opened
+		And I set checkbox "Linked documents"
+		And I expand a line in "ResultsTree" table
+			| 'Row presentation'                         |
+			| 'Sales order 35 dated 23.09.2021 10:19:43' |
+		And I activate field named "ResultsTreeRowPresentation" in "ResultsTree" table
+		And I expand a line in "ResultsTree" table
+			| 'Row presentation'                           |
+			| 'Sales invoice 35 dated 23.09.2021 10:20:04' |
+		And in the table "ResultsTree" I click "Unlink all" button
+	* Check
+		And "ResultsTree" table became equal
+			| 'Row presentation'                         | 'Quantity' | 'Unit' | 'Price'  | 'Currency' |
+			| 'Sales order 35 dated 23.09.2021 10:19:43' | ''         | ''     | ''       | ''         |
+			| 'Dress (XS/Blue)'                          | '1,000'    | 'pcs'  | '520,00' | 'TRY'      |
+			| 'Shirt (36/Red)'                           | '11,000'   | 'pcs'  | '350,00' | 'TRY'      |
+	And I close all client application windows
+		
+		
 				
+		
+						
 		
 				
 

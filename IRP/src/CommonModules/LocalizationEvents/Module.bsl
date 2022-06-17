@@ -1,4 +1,3 @@
-// @strict-types
 
 #Region Public
 
@@ -80,7 +79,7 @@ Procedure FindDataForInputStringChoiceDataGetProcessing(Source, ChoiceData, Para
 	Query.SetParameter("SearchString", Parameters.SearchString);
 	QueryTable = GetItemsBySearchString(Query);
 
-	ChoiceData = New ValueList();
+	ChoiceData = New ValueList(); // ValueList of CatalogRef.Items
 
 	For Each Row In QueryTable Do
 		If Not ChoiceData.FindByValue(Row.Ref) = Undefined Then
@@ -147,7 +146,7 @@ Procedure GetCatalogPresentation(Source, Data, Presentation, StandardProcessing)
 	SourceType = TypeOf(Source);
 	If SourceType = Type("CatalogManager.Currencies") Then
 		Presentation = String(Data.Code);
-	ElsIf SourceType = Type("ChartOfAccountsManager.R6010C_Master") Then
+	ElsIf SourceType = Type("ChartOfAccountsManager.Basic") Then
 		Presentation = String(Data.Code);
 	ElsIf SourceType = Type("CatalogManager.PriceKeys") Then
 		Presentation = LocalizationReuse.CatalogDescriptionWithAddAttributes(Data.Ref);
@@ -156,7 +155,7 @@ Procedure GetCatalogPresentation(Source, Data, Presentation, StandardProcessing)
 		EndIf;
 	ElsIf Data.Property("Description") Then
 		Presentation = String(Data.Description);
-	ElsIf Data.Property("FullDescription") Then
+	ElsIf Data.Property("FullDescription") And ValueIsFilled(Data.FullDescription) Then
 		Presentation = String(Data.FullDescription);
 	Else
 		Presentation = String(Data["Description_" + LocalizationReuse.UserLanguageCode()]);
@@ -376,7 +375,7 @@ Procedure CheckDescriptionDuplicate(Source, Cancel)
 	For Each Attribute In AllDescription Do
 		If ValueIsFilled(Source[Attribute]) Then
 			FieldLeftString = "Cat." + Attribute + " = &" + Attribute;
-			FieldString = "ISNUll(MAX(" + FieldLeftString + "), FALSE) AS " + Attribute;
+			FieldString = "IsNull(MAX(" + FieldLeftString + "), FALSE) AS " + Attribute;
 			QueryFieldsSection.Add(FieldString);
 			QueryConditionsSection.Add(FieldLeftString);
 			Query.SetParameter(Attribute, Source[Attribute]);
@@ -415,9 +414,9 @@ EndProcedure
 //
 // Returns:
 //  Structure - Custom search filter:
-// * FieldName - String
-// * Value - Undefined
-// * ComparisonType - ComparisonType
+// * FieldName - String - 
+// * Value - Undefined - 
+// * ComparisonType - See ComparisonType
 // * DataCompositionComparisonType - Undefined
 Function NewCustomSearchFilter() Export
 	Structure = New Structure;

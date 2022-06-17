@@ -50,6 +50,7 @@ Procedure TestConnectionCall()
 		eMail.Subject = "Test";
 		eMail.SenderName = ConnectionSetting.SenderName;
 		eMail.To.Add(ConnectionSetting.eMailForTest);
+		//@skip-warning
 		Answer = IntegrationClientServer.SendEmail(ConnectionSetting, eMail);
 		If Not Answer.Count() Then
 			CommonFunctionsClientServer.ShowUsersMessage(CommonFunctionsServer.SerializeJSON(Answer));
@@ -62,10 +63,12 @@ Procedure TestConnectionCall()
 	ElsIf
 	Not ExtensionCall_TestConnectionCall() Then
 		ConnectionSetting = IntegrationServer.ConnectionSettingTemplate();
+
 		For Each Str In Object.ConnectionSetting Do
 			FillPropertyValues(ConnectionSetting, New Structure(Str.Key, Str.Value));
 		EndDo;
 		ConnectionSetting.QueryType = "GET";
+		ConnectionSetting.IntegrationSettingsRef = Object.Ref;
 		ResourceParameters = New Structure();
 		ResourceParameters.Insert("MetadataName", "TestConnection");
 		ServerResponse = IntegrationClientServer.SendRequest(ConnectionSetting, ResourceParameters);

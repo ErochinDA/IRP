@@ -1,3 +1,4 @@
+
 #Region PrintForm
 
 Function GetPrintForm(Ref, PrintFormName, AddInfo = Undefined) Export
@@ -130,7 +131,7 @@ EndFunction
 Function GetQueryTextsSecondaryTables()
 	QueryArray = New Array();
 	QueryArray.Add(ItemList());
-	QueryArray.Add(AccauntBalance());
+	QueryArray.Add(AccountBalance());
 	QueryArray.Add(AdvancesToVendors());
 	QueryArray.Add(VendorsTransactions());
 	QueryArray.Add(AdvancesFromCustomers());
@@ -160,6 +161,7 @@ Function GetQueryTextsMasterTables()
 	QueryArray.Add(T2015S_TransactionsInfo());
 	QueryArray.Add(T6010S_BatchesInfo());
 	QueryArray.Add(T6020S_BatchKeysInfo());
+	QueryArray.Add(R4050B_StockInventory());
 	Return QueryArray;
 EndFunction
 
@@ -186,7 +188,7 @@ Function ItemList()
 	|	OpeningEntryInventory.Ref = &Ref";
 EndFunction
 
-Function AccauntBalance()
+Function AccountBalance()
 	Return "SELECT
 		   |	AccountBalance.Ref.Company AS Company,
 		   |	AccountBalance.Ref.Branch AS Branch,
@@ -195,7 +197,7 @@ Function AccauntBalance()
 		   |	AccountBalance.Amount AS Amount,
 		   |	AccountBalance.Ref.Date AS Period,
 		   |	AccountBalance.Key
-		   |INTO AccauntBalance
+		   |INTO AccountBalance
 		   |FROM
 		   |	Document.OpeningEntry.AccountBalance AS AccountBalance
 		   |WHERE
@@ -456,14 +458,20 @@ Function R5011B_CustomersAging()
 EndFunction
 
 Function R4010B_ActualStocks()
-	Return "SELECT 
-		   |	VALUE(AccumulationRecordType.Receipt) AS RecordType,
-		   |	*
-		   |INTO R4010B_ActualStocks
-		   |FROM
-		   |	ItemList AS QueryTable
-		   |WHERE 
-		   |	TRUE";
+	Return 
+	"SELECT
+	|	VALUE(AccumulationRecordType.Receipt) AS RecordType,
+	|	CASE
+	|		WHEN ItemList.SerialLotNumber.StockBalanceDetail
+	|			THEN ItemList.SerialLotNumber
+	|		ELSE VALUE(Catalog.SerialLotNumbers.EmptyRef)
+	|	END SerialLotNumber,
+	|	*
+	|INTO R4010B_ActualStocks
+	|FROM
+	|	ItemList AS ItemList
+	|WHERE
+	|	TRUE";
 EndFunction
 
 Function R4011B_FreeStocks()
@@ -496,7 +504,7 @@ Function R3010B_CashOnHand()
 		   |	*
 		   |INTO R3010B_CashOnHand
 		   |FROM
-		   |	AccauntBalance AS AccauntBalance
+		   |	AccountBalance AS AccountBalance
 		   |WHERE 
 		   |	TRUE";
 EndFunction
@@ -642,15 +650,32 @@ EndFunction
 
 Function T6010S_BatchesInfo()
 	Return
-		"SELECT
-		|	OpeningEntry.Ref AS Document,
-		|	OpeningEntry.Company AS Company,
-		|	OpeningEntry.Ref.Date AS Period
-		|INTO T6010S_BatchesInfo
-		|FROM
-		|	Document.OpeningEntry AS OpeningEntry
-		|WHERE
-		|	OpeningEntry.Ref = &Ref";
+	"SELECT
+	|	ItemList.Ref AS Document,
+	|	ItemList.Ref.Company AS Company,
+	|	ItemList.Ref.Date AS Period,
+	|	SUM(ItemList.Quantity) AS Quantity
+	|INTO tmp_T6010S_BatchesInfo
+	|FROM
+	|	ItemList AS ItemList
+	|WHERE
+	|	TRUE
+	|GROUP BY
+	|	ItemList.Ref,
+	|	ItemList.Ref.Company,
+	|	ItemList.Ref.Date
+	|;
+	|
+	|////////////////////////////////////////////////////////////////////////////////
+	|SELECT
+	|	Table.Document,
+	|	Table.Company,
+	|	Table.Period
+	|INTO T6010S_BatchesInfo
+	|FROM
+	|	tmp_T6010S_BatchesInfo AS Table
+	|WHERE
+	|	Table.Quantity > 0";
 EndFunction
 
 Function T6020S_BatchKeysInfo()
@@ -665,7 +690,7 @@ Function T6020S_BatchKeysInfo()
 	|	ItemList.Currency,
 	|	SUM(ItemList.Quantity) AS Quantity,
 	|	SUM(ItemList.Amount) AS Amount
-	|INTO T6020S_BatchKeysInfo
+	|INTO tmp_T6020S_BatchKeysInfo
 	|FROM
 	|	ItemList AS ItemList
 	|WHERE
@@ -677,7 +702,66 @@ Function T6020S_BatchKeysInfo()
 	|	ItemList.ItemKey,
 	|	ItemList.Period,
 	|	ItemList.Store,
-	|	VALUE(Enum.BatchDirection.Receipt)";
+	|	VALUE(Enum.BatchDirection.Receipt)
+	|;
+	|
+	|////////////////////////////////////////////////////////////////////////////////
+	|SELECT
+	|	Table.Period,
+	|	Table.Company,
+	|	Table.Store,
+	|	Table.ItemKey,
+	|	Table.Direction,
+	|	Table.CurrencyMovementType,
+	|	Table.Currency,
+	|	Table.Quantity,
+	|	Table.Amount
+	|INTO T6020S_BatchKeysInfo
+	|FROM
+	|	tmp_T6020S_BatchKeysInfo AS Table
+	|WHERE
+	|	Table.Quantity > 0"
+EndFunction
+
+Function R4050B_StockInventory()
+	Return 
+	"SELECT
+	|	VALUE(AccumulationRecordType.Receipt) AS RecordType,
+	|	ItemList.Period,
+	|	ItemList.Company,
+	|	ItemList.Store,
+	|	ItemList.ItemKey,
+	|	SUM(ItemList.Quantity) AS Quantity
+	|INTO R4050B_StockInventory
+	|FROM
+	|	ItemList AS ItemList
+	|WHERE
+	|	TRUE
+	|GROUP BY
+	|	VALUE(AccumulationRecordType.Receipt),
+	|	ItemList.Period,
+	|	ItemList.Company,
+	|	ItemList.Store,
+	|	ItemList.ItemKey";
 EndFunction
 
 #EndRegion
+
+Procedure FormGetProcessing(FormType, Parameters, SelectedForm, AdditionalInfo, StandardProcessing)
+	If FormType = "ListForm" And Constants.UseSimpleMode.Get() Then
+		Query = New Query();
+		Query.Text = 
+		"SELECT TOP 1 ALLOWED
+		|	OpeningEntry.Ref
+		|FROM
+		|	Document.OpeningEntry AS OpeningEntry";
+		QueryResult = Query.Execute();
+		QuerySelection = QueryResult.Select();
+		If QuerySelection.Next() Then
+			Parameters.Insert("Key", QuerySelection.Ref);
+		EndIf;
+		StandardProcessing = False;
+		SelectedForm = Metadata.Documents.OpeningEntry.DefaultObjectForm;
+	EndIf;
+EndProcedure
+

@@ -405,7 +405,7 @@
       <name>Quantity</name>
       <synonym>
         <key>en</key>
-        <value>Q</value>
+        <value>Quantity</value>
       </synonym>
       <type>
         <types>DefinedType.typeQuantity</types>
@@ -599,6 +599,54 @@
       <synonym>
         <key>en</key>
         <value>Is additional item revenue</value>
+      </synonym>
+      <type>
+        <types>Boolean</types>
+      </type>
+      <minValue xsi:type="core:UndefinedValue"/>
+      <maxValue xsi:type="core:UndefinedValue"/>
+      <dataHistory>Use</dataHistory>
+      <fullTextSearch>Use</fullTextSearch>
+    </attributes>
+    <attributes uuid="c27cb15b-2b92-4660-9cd6-4d764af4ba4b">
+      <name>SalesPerson</name>
+      <synonym>
+        <key>en</key>
+        <value>Sales person</value>
+      </synonym>
+      <type>
+        <types>CatalogRef.Partners</types>
+      </type>
+      <minValue xsi:type="core:UndefinedValue"/>
+      <maxValue xsi:type="core:UndefinedValue"/>
+      <choiceParameters>
+        <name>Filter.Employee</name>
+        <value xsi:type="core:BooleanValue">
+          <value>true</value>
+        </value>
+      </choiceParameters>
+      <dataHistory>Use</dataHistory>
+      <fullTextSearch>Use</fullTextSearch>
+    </attributes>
+    <attributes uuid="64d6d06b-a7c2-424a-9d6c-2ec099670972">
+      <name>UseSerialLotNumber</name>
+      <synonym>
+        <key>en</key>
+        <value>Use serial lot number</value>
+      </synonym>
+      <type>
+        <types>Boolean</types>
+      </type>
+      <minValue xsi:type="core:UndefinedValue"/>
+      <maxValue xsi:type="core:UndefinedValue"/>
+      <dataHistory>Use</dataHistory>
+      <fullTextSearch>Use</fullTextSearch>
+    </attributes>
+    <attributes uuid="9bcfc979-0cb5-4e3b-b066-62c62f944418">
+      <name>IsService</name>
+      <synonym>
+        <key>en</key>
+        <value>Is service</value>
       </synonym>
       <type>
         <types>Boolean</types>
@@ -1231,7 +1279,7 @@
       <name>Quantity</name>
       <synonym>
         <key>en</key>
-        <value>Q</value>
+        <value>Quantity</value>
       </synonym>
       <type>
         <types>DefinedType.typeQuantity</types>

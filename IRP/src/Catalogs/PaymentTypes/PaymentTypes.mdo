@@ -44,6 +44,9 @@
     <key>en</key>
     <value>Payment type</value>
   </objectPresentation>
+  <hierarchical>true</hierarchical>
+  <hierarchyType>HierarchyOfItems</hierarchyType>
+  <limitLevelCount>true</limitLevelCount>
   <levelCount>2</levelCount>
   <foldersOnTop>true</foldersOnTop>
   <codeLength>12</codeLength>
@@ -65,6 +68,36 @@
     </synonym>
     <type>
       <types>EnumRef.PaymentTypes</types>
+    </type>
+    <minValue xsi:type="core:UndefinedValue"/>
+    <maxValue xsi:type="core:UndefinedValue"/>
+    <fillValue xsi:type="core:UndefinedValue"/>
+    <fullTextSearch>Use</fullTextSearch>
+    <dataHistory>Use</dataHistory>
+  </attributes>
+  <attributes uuid="252c4285-2a08-4947-bc74-cfebb19f9dd1">
+    <name>Icon</name>
+    <synonym>
+      <key>en</key>
+      <value>Icon</value>
+    </synonym>
+    <type>
+      <types>ValueStorage</types>
+    </type>
+    <minValue xsi:type="core:UndefinedValue"/>
+    <maxValue xsi:type="core:UndefinedValue"/>
+    <fillValue xsi:type="core:UndefinedValue"/>
+    <fullTextSearch>Use</fullTextSearch>
+    <dataHistory>Use</dataHistory>
+  </attributes>
+  <attributes uuid="43d9f2fa-b9ba-4d65-bd4c-eb566d2f13a7">
+    <name>isIconSet</name>
+    <synonym>
+      <key>en</key>
+      <value>Is icon set</value>
+    </synonym>
+    <type>
+      <types>Boolean</types>
     </type>
     <minValue xsi:type="core:UndefinedValue"/>
     <maxValue xsi:type="core:UndefinedValue"/>
@@ -114,6 +147,7 @@
       <dataHistory>Use</dataHistory>
       <fullTextSearch>Use</fullTextSearch>
     </attributes>
+    <use>ForFolderAndItem</use>
   </tabularSections>
   <forms uuid="22902463-20cf-4b29-b85a-4d889c8828df">
     <name>ItemForm</name>

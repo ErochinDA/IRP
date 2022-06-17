@@ -3,26 +3,7 @@ Procedure FillingWithDefaultDataFilling(Source, FillingData, FillingText, Standa
 		Force = False;
 	EndIf;
 
-//===
-IsUsedNewFunctionality =
-	   TypeOf(Source) = Type("DocumentObject.IncomingPaymentOrder")
-	Or TypeOf(Source) = Type("DocumentObject.OutgoingPaymentOrder")
-	
-	Or TypeOf(Source) = Type("DocumentObject.MoneyTransfer")
-	   
-	Or TypeOf(Source) = Type("DocumentObject.BankPayment")
-	Or TypeOf(Source) = Type("DocumentObject.BankReceipt")
-	Or TypeOf(Source) = Type("DocumentObject.CashPayment")
-	Or TypeOf(Source) = Type("DocumentObject.CashReceipt")
-	
-	Or TypeOf(Source) = Type("DocumentObject.CashExpense")
-	Or TypeOf(Source) = Type("DocumentObject.CashRevenue")
-	
-	Or TypeOf(Source) = Type("DocumentObject.ShipmentConfirmation")
-	Or TypeOf(Source) = Type("DocumentObject.GoodsReceipt")
-	Or TypeOf(Source) = Type("DocumentObject.StockAdjustmentAsSurplus")
-	Or TypeOf(Source) = Type("DocumentObject.StockAdjustmentAsWriteOff")
-	Or TypeOf(Source) = Type("DocumentObject.SalesInvoice");
+	IsUsedNewFunctionality = UsedNewFunctionality(Source);
 
 	Data = New Structure();
 
@@ -42,7 +23,6 @@ IsUsedNewFunctionality =
 		EndIf;
 	EndDo;
 	
-	//==
 	If IsUsedNewFunctionality Then
 		ArrayOfAllMainTables = New Array();
 		ArrayOfAllMainTables.Add("ItemList");
@@ -54,8 +34,11 @@ IsUsedNewFunctionality =
 				ArrayOfMainTables.Add(TableName);
 			EndIf;
 		EndDo;
+		If Not ArrayOfMainTables.Count() Then
+			ArrayOfMainTables.Add("");
+		EndIf;
 		
-		// свойства которые были заполнены из настроек пользователя
+		// properties from UserSettings
 		ArrayOfUserSettingsProperties = New Array();
 		For Each KeyValue In Data Do
 			If CommonFunctionsClientServer.ObjectHasProperty(Source, KeyValue.Key) 
@@ -63,7 +46,7 @@ IsUsedNewFunctionality =
 				ArrayOfUserSettingsProperties.Add(TrimAll(KeyValue.Key));	
 			EndIf;
 		EndDo;
-		UserSettinsProperties = StrConcat(ArrayOfUserSettingsProperties, ",");
+		UserSettingsProperties = StrConcat(ArrayOfUserSettingsProperties, ",");
 	
 		ReadOnlyProperties = "";
 		Source.AdditionalProperties.Property("ReadOnlyProperties", ReadOnlyProperties);
@@ -73,12 +56,12 @@ IsUsedNewFunctionality =
 		Source.AdditionalProperties.Property("IsBasedOn", IsBasedOn);
 		IsBasedOn = ?(IsBasedOn = Undefined, False, IsBasedOn);
 		
-		// если документ был введен на основании то у него уже есть заполненные реквизиты
-		// список этих реквизитов в ReadOnlyProperties
-		// нужно для каждого уже заполненного реквизита вызвать его обработчик
+		// if document was generated on basis, then it already has completed attributes
+		// list of completed attributes in ReadOnlyProperties
+		// need call handler OnChange for each already filled attribute
 	
 		ArrayOfBasisDocumentProperties = StrSplit(ReadOnlyProperties, ",");
-		ArrayOfUserSettinsProperties   = StrSplit(UserSettinsProperties, ",");
+		ArrayOfUserSettingsProperties   = StrSplit(UserSettingsProperties, ",");
 		For Each TableName In ArrayOfMainTables Do
 			// BasisDocument
 			ServerParameters = ControllerClientServer_V2.GetServerParameters(Source);
@@ -87,15 +70,12 @@ IsUsedNewFunctionality =
 			ServerParameters.ReadOnlyProperties = ReadOnlyProperties;
 			Parameters = ControllerClientServer_V2.GetParameters(ServerParameters);
 			
-			For Each PropertyName In ArrayOfBasisDocumentProperties Do
-				If Not ValueIsFilled(PropertyName) Then
+			For Each DataPath In ArrayOfBasisDocumentProperties Do
+				If Not ValueIsFilled(DataPath) Then
 					Continue;
 				EndIf;
-				DataPath = StrSplit(PropertyName, ".");
-				If DataPath.Count() = 1 Then
-					Property = New Structure("DataPath", TrimAll(DataPath[0]));
-					ControllerClientServer_V2.API_SetProperty(Parameters, Property, Source[Property.DataPath]);
-				EndIf;
+				Property = New Structure("DataPath", TrimAll(DataPath));
+				ControllerClientServer_V2.API_SetProperty(Parameters, Property, Undefined);
 			EndDo;
 			
 			// UserSetting
@@ -103,10 +83,10 @@ IsUsedNewFunctionality =
 			ServerParameters.IsBasedOn          = IsBasedOn;
 			ServerParameters.TableName          = TableName;
 			ServerParameters.ReadOnlyProperties = ?(ValueIsFilled(ReadOnlyProperties), 
-				ReadOnlyProperties + ", " + UserSettinsProperties, UserSettinsProperties);;
+				ReadOnlyProperties + ", " + UserSettingsProperties, UserSettingsProperties);;
 			Parameters = ControllerClientServer_V2.GetParameters(ServerParameters);
 			
-			For Each PropertyName In ArrayOfUserSettinsProperties Do
+			For Each PropertyName In ArrayOfUserSettingsProperties Do
 				If Not ValueIsFilled(PropertyName) Then
 					Continue;
 				EndIf;
@@ -126,50 +106,20 @@ IsUsedNewFunctionality =
 				EndIf;
 			EndDo;
 			
-		EndDo;
+		EndDo; // ArrayOfMainTables
+		
+		
 		
 		
 	EndIf; // IsUsedNewFunctionality 
-	//==
 	
 	For Each KeyValue In Data Do
 		If CommonFunctionsClientServer.ObjectHasProperty(Source, KeyValue.Key) Then
-			//==
-//			If IsUsedNewFunctionality Then
-//				// временно, потом перенести в модуль Controller
-//				
-//				// заполняем реквизиты из настроек пользователя,
-//				// но только не те что в ReadOnlyProperties
-//				Property = New Structure("DataPath", KeyValue.Key);
-//				Value    = KeyValue.Value;
-//				
-//				ArrayOfReadOnlyProperties = StrSplit(ReadOnlyProperties, ",");
-//				If ValueIsFilled(Value) And Not ValueIsFilled(Source[Property.DataPath]) Then
-//					If ArrayOfReadOnlyProperties.Find(Property.DataPath) = Undefined Then
-//						Source[Property.DataPath] = Value;
-//					EndIf;
-//				EndIf;
-//				
-//				For Each TableName In ArrayOfMainTables Do
-//					ServerParameters = ControllerClientServer_V2.GetServerParameters(Source);
-//					ServerParameters.TableName = TableName;
-//					
-//					ServerParameters.ReadOnlyProperties = ?(ValueIsFilled(ReadOnlyProperties), 
-//						ReadOnlyProperties + ", " + UserSettinsProperties, UserSettinsProperties);
-//					
-//					Parameters = ControllerClientServer_V2.GetParameters(ServerParameters);
-//					
-//					ControllerClientServer_V2.API_SetProperty(Parameters, Property, Value);
-//				EndDo;
-//			Else
-			//==
-				If TypeOf(Source[KeyValue.Key]) = Type("Boolean") And Not Source[KeyValue.Key] Then
-					Source[KeyValue.Key] = KeyValue.Value;
-				ElsIf Not ValueIsFilled(Source[KeyValue.Key]) Or Force Then
-					Source[KeyValue.Key] = KeyValue.Value;
-				EndIf;
-//			EndIf;
-			//==
+			If TypeOf(Source[KeyValue.Key]) = Type("Boolean") And Not Source[KeyValue.Key] Then
+				Source[KeyValue.Key] = KeyValue.Value;
+			ElsIf Not ValueIsFilled(Source[KeyValue.Key]) Or Force Then
+				Source[KeyValue.Key] = KeyValue.Value;
+			EndIf;
 		EndIf;
 	EndDo;
 
@@ -181,11 +131,9 @@ IsUsedNewFunctionality =
 		Source.Status = ObjectStatusesServer.GetStatusByDefault(Source.Ref);
 	EndIf;
 	
-	//===
 	If IsUsedNewFunctionality Then
 		Return;
 	EndIf;
-	//===
 	
 	UseShipmentConfirmation = False;
 	If Attributes.Find("StoreSender") <> Undefined And Attributes.Find("UseShipmentConfirmation") <> Undefined Then
@@ -264,3 +212,51 @@ Procedure ClearDocumentBasisesOnCopy(Source, CopiedObject) Export
 		DocumentsServer.SetNewTableUUID(Source.ItemList, LinkedTables);
 	EndIf;
 EndProcedure
+
+Function UsedNewFunctionality(Source)
+	IsUsedNewFunctionality =
+	   TypeOf(Source) = Type("DocumentObject.IncomingPaymentOrder")
+	Or TypeOf(Source) = Type("DocumentObject.OutgoingPaymentOrder")
+	
+	Or TypeOf(Source) = Type("DocumentObject.MoneyTransfer")
+	   
+	Or TypeOf(Source) = Type("DocumentObject.BankPayment")
+	Or TypeOf(Source) = Type("DocumentObject.BankReceipt")
+	Or TypeOf(Source) = Type("DocumentObject.CashPayment")
+	Or TypeOf(Source) = Type("DocumentObject.CashReceipt")
+	
+	Or TypeOf(Source) = Type("DocumentObject.CashExpense")
+	Or TypeOf(Source) = Type("DocumentObject.CashRevenue")
+	Or TypeOf(Source) = Type("DocumentObject.CreditNote")
+	Or TypeOf(Source) = Type("DocumentObject.DebitNote")
+	
+	Or TypeOf(Source) = Type("DocumentObject.ShipmentConfirmation")
+	Or TypeOf(Source) = Type("DocumentObject.GoodsReceipt")
+	Or TypeOf(Source) = Type("DocumentObject.StockAdjustmentAsSurplus")
+	Or TypeOf(Source) = Type("DocumentObject.StockAdjustmentAsWriteOff")
+	Or TypeOf(Source) = Type("DocumentObject.SalesInvoice")
+	Or TypeOf(Source) = Type("DocumentObject.PurchaseInvoice")
+	Or TypeOf(Source) = Type("DocumentObject.InternalSupplyRequest")
+	Or TypeOf(Source) = Type("DocumentObject.RetailSalesReceipt")
+	
+	Or TypeOf(Source) = Type("DocumentObject.SalesReturn")
+	Or TypeOf(Source) = Type("DocumentObject.PurchaseReturn")
+	Or TypeOf(Source) = Type("DocumentObject.RetailReturnReceipt")
+
+	Or TypeOf(Source) = Type("DocumentObject.SalesOrder")
+	Or TypeOf(Source) = Type("DocumentObject.SalesOrderClosing")
+	Or TypeOf(Source) = Type("DocumentObject.PurchaseOrder")
+	Or TypeOf(Source) = Type("DocumentObject.PurchaseOrderClosing")
+	Or TypeOf(Source) = Type("DocumentObject.SalesReturnOrder")
+	Or TypeOf(Source) = Type("DocumentObject.PurchaseReturnOrder")
+	Or TypeOf(Source) = Type("DocumentObject.InventoryTransfer")
+	Or TypeOf(Source) = Type("DocumentObject.InventoryTransferOrder")
+	Or TypeOf(Source) = Type("DocumentObject.PhysicalInventory")
+	Or TypeOf(Source) = Type("DocumentObject.ItemStockAdjustment")
+	Or TypeOf(Source) = Type("DocumentObject.Bundling")
+	Or TypeOf(Source) = Type("DocumentObject.Unbundling")
+	
+	Or TypeOf(Source) = Type("DocumentObject.CashTransferOrder");
+	
+	Return IsUsedNewFunctionality;
+EndFunction

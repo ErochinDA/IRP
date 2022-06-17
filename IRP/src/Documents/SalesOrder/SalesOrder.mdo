@@ -408,7 +408,7 @@
       <name>Quantity</name>
       <synonym>
         <key>en</key>
-        <value>Q</value>
+        <value>Quantity</value>
       </synonym>
       <type>
         <types>DefinedType.typeQuantity</types>
@@ -596,6 +596,40 @@
         <dateQualifiers>
           <dateFractions>Date</dateFractions>
         </dateQualifiers>
+      </type>
+      <minValue xsi:type="core:UndefinedValue"/>
+      <maxValue xsi:type="core:UndefinedValue"/>
+      <dataHistory>Use</dataHistory>
+      <fullTextSearch>Use</fullTextSearch>
+    </attributes>
+    <attributes uuid="7eecb30f-584d-4990-b7c8-6a825316c97e">
+      <name>SalesPerson</name>
+      <synonym>
+        <key>en</key>
+        <value>Sales person</value>
+      </synonym>
+      <type>
+        <types>CatalogRef.Partners</types>
+      </type>
+      <minValue xsi:type="core:UndefinedValue"/>
+      <maxValue xsi:type="core:UndefinedValue"/>
+      <choiceParameters>
+        <name>Filter.Employee</name>
+        <value xsi:type="core:BooleanValue">
+          <value>true</value>
+        </value>
+      </choiceParameters>
+      <dataHistory>Use</dataHistory>
+      <fullTextSearch>Use</fullTextSearch>
+    </attributes>
+    <attributes uuid="7c2d1e5a-0cba-4fc9-9616-9d184ca83b71">
+      <name>IsService</name>
+      <synonym>
+        <key>en</key>
+        <value>Is service</value>
+      </synonym>
+      <type>
+        <types>Boolean</types>
       </type>
       <minValue xsi:type="core:UndefinedValue"/>
       <maxValue xsi:type="core:UndefinedValue"/>
@@ -1107,7 +1141,7 @@
       <name>Quantity</name>
       <synonym>
         <key>en</key>
-        <value>Q</value>
+        <value>Quantity</value>
       </synonym>
       <type>
         <types>DefinedType.typeQuantity</types>

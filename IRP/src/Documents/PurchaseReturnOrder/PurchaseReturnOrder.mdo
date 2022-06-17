@@ -433,7 +433,7 @@
       <name>Quantity</name>
       <synonym>
         <key>en</key>
-        <value>Q</value>
+        <value>Quantity</value>
       </synonym>
       <type>
         <types>DefinedType.typeQuantity</types>
@@ -558,6 +558,20 @@
       </synonym>
       <type>
         <types>Characteristic.AddAttributeAndProperty</types>
+      </type>
+      <minValue xsi:type="core:UndefinedValue"/>
+      <maxValue xsi:type="core:UndefinedValue"/>
+      <dataHistory>Use</dataHistory>
+      <fullTextSearch>Use</fullTextSearch>
+    </attributes>
+    <attributes uuid="594693e0-3467-4d04-9724-7223fa3cf9de">
+      <name>IsService</name>
+      <synonym>
+        <key>en</key>
+        <value>Is service</value>
+      </synonym>
+      <type>
+        <types>Boolean</types>
       </type>
       <minValue xsi:type="core:UndefinedValue"/>
       <maxValue xsi:type="core:UndefinedValue"/>
@@ -982,7 +996,7 @@
       <name>Quantity</name>
       <synonym>
         <key>en</key>
-        <value>Q</value>
+        <value>Quantity</value>
       </synonym>
       <type>
         <types>DefinedType.typeQuantity</types>

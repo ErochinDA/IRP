@@ -1,20 +1,9 @@
-#Region FormEvents
+#Region FORM
 
 &AtServer
-Procedure BeforeWriteAtServer(Cancel, CurrentObject, WriteParameters)
-	AddAttributesAndPropertiesServer.BeforeWriteAtServer(ThisObject, Cancel, CurrentObject, WriteParameters);
-EndProcedure
-
-&AtClient
-Procedure NotificationProcessing(EventName, Parameter, Source, AddInfo = Undefined) Export
-	If EventName = "UpdateAddAttributeAndPropertySets" Then
-		AddAttributesCreateFormControl();
-	EndIf;
-EndProcedure
-
-&AtClient
-Procedure OnOpen(Cancel, AddInfo = Undefined) Export
-	DocOutgoingPaymentOrderClient.OnOpen(Object, ThisObject, Cancel);
+Procedure OnReadAtServer(CurrentObject)
+	DocOutgoingPaymentOrderServer.OnReadAtServer(Object, ThisObject, CurrentObject);
+	SetVisibilityAvailability(Object, ThisObject);
 EndProcedure
 
 &AtServer
@@ -25,26 +14,27 @@ Procedure OnCreateAtServer(Cancel, StandardProcessing)
 	DocOutgoingPaymentOrderServer.OnCreateAtServer(Object, ThisObject, Cancel, StandardProcessing);
 EndProcedure
 
-&AtClient
-Procedure PaymentListOnChange(Item)
-	Return;
-//	For Each Row In Object.PaymentList Do
-//		If Not ValueIsFilled(Row.Key) Then
-//			Row.Key = New UUID();
-//		EndIf;
-//	EndDo;
+&AtServer
+Procedure BeforeWriteAtServer(Cancel, CurrentObject, WriteParameters)
+	AddAttributesAndPropertiesServer.BeforeWriteAtServer(ThisObject, Cancel, CurrentObject, WriteParameters);
 EndProcedure
 
 &AtServer
-Procedure OnReadAtServer(CurrentObject)
-	DocOutgoingPaymentOrderServer.OnReadAtServer(Object, ThisObject, CurrentObject);
-	SetVisibilityAvailability(Object, ThisObject);
-EndProcedure
-
-&AtServer
-Procedure AfterWriteAtServer(CurrentObject, WriteParameters, AddInfo = Undefined) Export
+Procedure AfterWriteAtServer(CurrentObject, WriteParameters)
 	DocOutgoingPaymentOrderServer.AfterWriteAtServer(Object, ThisObject, CurrentObject, WriteParameters);
 	SetVisibilityAvailability(Object, ThisObject);
+EndProcedure
+
+&AtClient
+Procedure OnOpen(Cancel)
+	DocOutgoingPaymentOrderClient.OnOpen(Object, ThisObject, Cancel);
+EndProcedure
+
+&AtClient
+Procedure NotificationProcessing(EventName, Parameter, Source)
+	If EventName = "UpdateAddAttributeAndPropertySets" Then
+		AddAttributesCreateFormControl();
+	EndIf;
 EndProcedure
 
 &AtClient
@@ -59,25 +49,19 @@ EndProcedure
 
 #EndRegion
 
+#Region _DATE
+
 &AtClient
-Procedure DescriptionClick(Item, StandardProcessing)
-	DocOutgoingPaymentOrderClient.DescriptionClick(Object, ThisObject, Item, StandardProcessing);
+Procedure DateOnChange(Item)
+	DocOutgoingPaymentOrderClient.DateOnChange(Object, ThisObject, Item);
 EndProcedure
 
-&AtClient
-Procedure PaymentListBeforeAddRow(Item, Cancel, Clone, Parent, IsFolder, Parameter)
-	DocOutgoingPaymentOrderClient.PaymentListBeforeAddRow(Object, ThisObject, Item, Cancel, Clone, Parent, IsFolder, Parameter);
-EndProcedure
+#EndRegion
+
+#Region COMPANY
 
 &AtClient
-Procedure PaymentListAfterDeleteRow(Item)
-	DocOutgoingPaymentOrderClient.PaymentListAfterDeleteRow(Object, ThisObject, Item);
-EndProcedure
-
-#Region ItemCompany
-
-&AtClient
-Procedure CompanyOnChange(Item, AddInfo = Undefined) Export
+Procedure CompanyOnChange(Item)
 	DocOutgoingPaymentOrderClient.CompanyOnChange(Object, ThisObject, Item);
 EndProcedure
 
@@ -93,34 +77,10 @@ EndProcedure
 
 #EndRegion
 
-#Region GroupTitleDecorations
+#Region ACCOUNT
 
 &AtClient
-Procedure DecorationGroupTitleCollapsedPictureClick(Item)
-	DocOutgoingPaymentOrderClient.DecorationGroupTitleCollapsedPictureClick(Object, ThisObject, Item);
-EndProcedure
-
-&AtClient
-Procedure DecorationGroupTitleCollapsedLabelClick(Item)
-	DocOutgoingPaymentOrderClient.DecorationGroupTitleCollapsedLabelClick(Object, ThisObject, Item);
-EndProcedure
-
-&AtClient
-Procedure DecorationGroupTitleUncollapsedPictureClick(Item)
-	DocOutgoingPaymentOrderClient.DecorationGroupTitleUncollapsedPictureClick(Object, ThisObject, Item);
-EndProcedure
-
-&AtClient
-Procedure DecorationGroupTitleUncollapsedLabelClick(Item)
-	DocOutgoingPaymentOrderClient.DecorationGroupTitleUncollapsedLabelClick(Object, ThisObject, Item);
-EndProcedure
-
-#EndRegion
-
-#Region ItemAccount
-
-&AtClient
-Procedure AccountOnChange(Item, AddInfo = Undefined) Export
+Procedure AccountOnChange(Item)
 	DocOutgoingPaymentOrderClient.AccountOnChange(Object, ThisObject, Item);
 EndProcedure
 
@@ -136,49 +96,57 @@ EndProcedure
 
 #EndRegion
 
+#Region CURRENCY
+
 &AtClient
-Procedure CurrencyOnChange(Item, AddInfo = Undefined) Export
+Procedure CurrencyOnChange(Item)
 	DocOutgoingPaymentOrderClient.CurrencyOnChange(Object, ThisObject, Item);
 EndProcedure
 
-&AtClient
-Procedure DateOnChange(Item, AddInfo = Undefined) Export
-	DocOutgoingPaymentOrderClient.DateOnChange(Object, ThisObject, Item);
-EndProcedure
+#EndRegion
+
+#Region PLANNING_PERIOD
 
 &AtClient
-Procedure StatusOnChange(Item, AddInfo = Undefined) Export
-	DocOutgoingPaymentOrderClient.StatusOnChange(Object, ThisObject, Item);
-EndProcedure
-
-&AtClient
-Procedure PlaningPeriodOnChange(Item, AddInfo = Undefined) Export
+Procedure PlaningPeriodOnChange(Item)
 	DocOutgoingPaymentOrderClient.PlaningPeriodOnChange(Object, ThisObject, Item);
 EndProcedure
 
+#EndRegion
+
+#Region STATUS
+
 &AtClient
-Procedure PaymentListFinancialMovementTypeStartChoice(Item, ChoiceData, StandardProcessing)
-	DocOutgoingPaymentOrderClient.PaymentListFinancialMovementTypeStartChoice(Object, ThisObject, Item, ChoiceData,
-		StandardProcessing);
+Procedure StatusOnChange(Item)
+	DocOutgoingPaymentOrderClient.StatusOnChange(Object, ThisObject, Item);
+EndProcedure
+
+#EndRegion
+
+#Region PAYMENT_LIST
+
+&AtClient
+Procedure PaymentListBeforeAddRow(Item, Cancel, Clone, Parent, IsFolder, Parameter)
+	DocOutgoingPaymentOrderClient.PaymentListBeforeAddRow(Object, ThisObject, Item, Cancel, Clone, Parent, IsFolder, Parameter);
 EndProcedure
 
 &AtClient
-Procedure PaymentListFinancialMovementTypeEditTextChange(Item, Text, StandardProcessing)
-	DocOutgoingPaymentOrderClient.PaymentListFinancialMovementTypeEditTextChange(Object, ThisObject, Item, Text,
-		StandardProcessing);
+Procedure PaymentListAfterDeleteRow(Item)
+	DocOutgoingPaymentOrderClient.PaymentListAfterDeleteRow(Object, ThisObject, Item);
 EndProcedure
 
-#Region Partner
+#Region PAYMENT_LIST_COLUMNS
+
+#Region PARTNER
 
 &AtClient
-Procedure PaymentListPartnerOnChange(Item, AddInfo = Undefined) Export
+Procedure PaymentListPartnerOnChange(Item)
 	DocOutgoingPaymentOrderClient.PaymentListPartnerOnChange(Object, ThisObject, Item);
 EndProcedure
 
 &AtClient
 Procedure PaymentListPartnerStartChoice(Item, ChoiceData, StandardProcessing)
-	DocOutgoingPaymentOrderClient.PaymentListPartnerStartChoice(Object, ThisObject, Item, ChoiceData,
-		StandardProcessing);
+	DocOutgoingPaymentOrderClient.PaymentListPartnerStartChoice(Object, ThisObject, Item, ChoiceData, StandardProcessing);
 EndProcedure
 
 &AtClient
@@ -188,10 +156,10 @@ EndProcedure
 
 #EndRegion
 
-#Region Payee
+#Region PAYEE
 
 &AtClient
-Procedure PaymentListPayeeOnChange(Item, AddInfo = Undefined) Export
+Procedure PaymentListPayeeOnChange(Item)
 	DocOutgoingPaymentOrderClient.PaymentListPayeeOnChange(Object, ThisObject, Item);
 EndProcedure
 
@@ -207,7 +175,60 @@ EndProcedure
 
 #EndRegion
 
-#Region AddAttributes
+#Region FINANCIAL_MOVEMENT_TYPE
+
+&AtClient
+Procedure PaymentListFinancialMovementTypeStartChoice(Item, ChoiceData, StandardProcessing)
+	DocOutgoingPaymentOrderClient.PaymentListFinancialMovementTypeStartChoice(Object, ThisObject, Item, ChoiceData, StandardProcessing);
+EndProcedure
+
+&AtClient
+Procedure PaymentListFinancialMovementTypeEditTextChange(Item, Text, StandardProcessing)
+	DocOutgoingPaymentOrderClient.PaymentListFinancialMovementTypeEditTextChange(Object, ThisObject, Item, Text, StandardProcessing);
+EndProcedure
+
+#EndRegion
+
+#EndRegion
+
+#EndRegion
+
+#Region SERVICE
+
+#Region DESCRIPTION
+
+&AtClient
+Procedure DescriptionClick(Item, StandardProcessing)
+	CommonFormActions.EditMultilineText(ThisObject, Item, StandardProcessing);
+EndProcedure
+
+#EndRegion
+
+#Region TITLE_DECORATIONS
+
+&AtClient
+Procedure DecorationGroupTitleCollapsedPictureClick(Item)
+	DocumentsClientServer.ChangeTitleCollapse(Object, ThisObject, True);
+EndProcedure
+
+&AtClient
+Procedure DecorationGroupTitleCollapsedLabelClick(Item)
+	DocumentsClientServer.ChangeTitleCollapse(Object, ThisObject, True);
+EndProcedure
+
+&AtClient
+Procedure DecorationGroupTitleUncollapsedPictureClick(Item)
+	DocumentsClientServer.ChangeTitleCollapse(Object, ThisObject, False);
+EndProcedure
+
+&AtClient
+Procedure DecorationGroupTitleUncollapsedLabelClick(Item)
+	DocumentsClientServer.ChangeTitleCollapse(Object, ThisObject, False);
+EndProcedure
+
+#EndRegion
+
+#Region ADD_ATTRIBUTES
 
 &AtClient
 Procedure AddAttributeStartChoice(Item, ChoiceData, StandardProcessing) Export
@@ -221,7 +242,7 @@ EndProcedure
 
 #EndRegion
 
-#Region ExternalCommands
+#Region EXTERNAL_COMMANDS
 
 &AtClient
 Procedure GeneratedFormCommandActionByName(Command) Export
@@ -235,11 +256,6 @@ Procedure GeneratedFormCommandActionByNameServer(CommandName) Export
 EndProcedure
 
 #EndRegion
-
-&AtClient
-Procedure ShowRowKey(Command)
-	DocumentsClient.ShowRowKey(ThisObject);
-EndProcedure
 
 &AtClient
 Procedure EditCurrencies(Command)
@@ -256,7 +272,13 @@ Procedure EditCurrencies(Command)
 EndProcedure
 
 &AtClient
+Procedure ShowRowKey(Command)
+	DocumentsClient.ShowRowKey(ThisObject);
+EndProcedure
+
+&AtClient
 Procedure ShowHiddenTables(Command)
 	DocumentsClient.ShowHiddenTables(Object, ThisObject);
 EndProcedure
 
+#EndRegion

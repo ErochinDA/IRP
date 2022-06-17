@@ -41,12 +41,7 @@ Scenario: _300100 preparation (image setting)
 		When update ItemKeys
 		When Create catalog InterfaceGroups objects
 		When Create catalog Currencies objects
-	* Add test extension
-		Given I open hyperlink "e1cib/list/Catalog.Extensions"
-		If "List" table does not contain lines Then
-				| "Description" |
-				| "TestExtension" |
-			When add test extension
+
 
 Scenario: _300101 image setting
 	* Filling in settings in  File storages info
@@ -340,8 +335,38 @@ Scenario: _300110 opening Files catalog element
 		Then "dresswhite.jpg (File)" window is opened
 		Then system warning window does not appear
 		And I close all client application windows
-		
+	
 
+Scenario: _300112 show pictures in the item list
+	* Open Item catalog list form
+		Given I open hyperlink "e1cib/list/Catalog.Items"
+	* Show pictures
+		And I click the button named "ViewPictures"
+		And I go to line in "List" table
+			| 'Description' |
+			| 'Trousers'       |
+		Then user message window does not contain messages
+		And I click the button named "ViewPictures"
+		Then user message window does not contain messages
+		
+Scenario: _300113 show add attributes in the item list
+	And I close all client application windows
+	* Open Item catalog list form
+		Given I open hyperlink "e1cib/list/Catalog.Items"
+	* Show add attributes
+		And I click the button named "ViewAdditionalAttribute"
+		And I go to line in "List" table
+			| 'Description' |
+			| 'Dress'    |
+		And I activate current test client window
+		And I click Test Client element "Rose" "Edit" UI Automation
+		And I click the button named "ViewAdditionalAttribute"
+		And I activate current test client window
+		When I Check the steps for Exception
+        	|"And I click Test Client element "Rose" "Edit" UI Automation"|
+		And I close all client application windows
+		
+				
 
 
 Scenario: _300115 check removal of pictures from Item
@@ -370,7 +395,43 @@ Scenario: _300115 check removal of pictures from Item
 			| 'Owner'    | 'File'          |
 			| 'Dress'    | 'dressblue.jpg' |
 	And I close all client application windows
+
+Scenario: _300116 check download pictures from Item
+		And I close all client application windows
+	* Open Item list form
+		Given I open hyperlink "e1cib/list/Catalog.Items"
+		And I go to line in "List" table
+			| 'Description'  |
+			| 'Trousers'        |
+		And I select current line in "List" table
+	* Select DefaultFilesStorageVolume
+		And I click "Attached files" button
+		Then "Attach file" window is opened
+		And I click Choice button of the field named "DefaultFilesStorageVolume"
+		And I go to line in "List" table
+			| 'Description'             |
+			| 'DEFAULT PICTURE STORAGE' |
+		And I select current line in "List" table	
+	* Download picture
+		// And I input "#workingDir#/features/Internal" text in the field named "dragFile"	
+		And I input "#workingDir#/features/Internal/_4000TestWithExtension\dresswhite.jpg" text in the field named "dragFile"	
+		And I click the button named "dragFileBtn"	
+		Then "1C:Enterprise" window is opened
+		And I click "OK" button
+		And "FileList" table became equal
+			| 'File'           |
+			| 'dresswhite.jpg' |
+		And I input "#workingDir#/features/Internal/_4000TestWithExtension\dresswhite12.jpg" text in the field named "saveFile"	
+		And I click "Download file" button
+		// And I wait for "resswhite12" file existence in "20" seconds
+		Then user message window does not contain messages
+		And I close all client application windows
 		
+				
+		
+		
+				
+
 
 // Scenario: _300150 removal of unused elements of the Files catalog
 // 	* Open catalog Files
@@ -437,7 +498,7 @@ Scenario: _4000105 check add attributes from extensions
 		And I input "USD" text in the field named "SettingsFilterRightValue" of "SettingsFilter" table
 		And I finish line editing in "SettingsFilter" table
 		And in the table "ResultTable" I click "Verify" button
-		And "ResultTable" table became equal
+		And "ResultTable" table contains lines
 			| 'Ref' |
 			| 'USD' |
 		And I click "Ok" button			

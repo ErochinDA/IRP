@@ -82,12 +82,13 @@ Scenario: _001 test data
 			| 'Main Company' |
 		And I select current line in "List" table
 		And I select "Company" exact value from the drop-down list named "Type"
-		And I move to "External attributes" tab
-		And I click Select button of "Landed cost currency movement type" field
+		And I move to "Landed cost" tab
+		And I click Select button of "Currency movement type" field
 		And I go to line in "List" table
 			| 'Currency' | 'Deferred calculation' | 'Description'    | 'Reference'      | 'Source'       | 'Type'  |
 			| 'TRY'      | 'No'                   | 'Local currency' | 'Local currency' | 'Forex Seling' | 'Legal' |
 		And I select current line in "List" table
+		Then the form attribute named "LandedCostCurrencyMovementType" became equal to "Local currency"
 		And I click "Save and close" button
 		And I wait "Main Company (Company) *" window closing in 20 seconds
 		Then "Companies" window is opened
@@ -96,15 +97,13 @@ Scenario: _001 test data
 			| 'Second Company' |
 		And I select current line in "List" table
 		And I select "Company" exact value from the drop-down list named "Type"
-		And I move to "External attributes" tab
-		And I click Select button of "Landed cost currency movement type" field
-		And I go to line in "List" table
-			| 'Currency' | 'Deferred calculation' | 'Description'        | 'Reference'          | 'Source'       | 'Type'      |
-			| 'USD'      | 'No'                   | 'Reporting currency' | 'Reporting currency' | 'Forex Seling' | 'Reporting' |
+		And I move to "Landed cost" tab
+		And I click Select button of "Currency movement type" field
 		And I go to line in "List" table
 			| 'Currency' | 'Deferred calculation' | 'Description'    | 'Reference'      | 'Source'       | 'Type'  |
 			| 'TRY'      | 'No'                   | 'Local currency' | 'Local currency' | 'Forex Seling' | 'Legal' |
 		And I select current line in "List" table
+		Then the form attribute named "LandedCostCurrencyMovementType" became equal to "Local currency"
 		And I click "Save and close" button
 		And I wait "Second Company (Company) *" window closing in 20 seconds
 	* Load documents
@@ -334,7 +333,7 @@ Scenario: _003 creating Purchase invoice and checking close Batch wise over bala
 				| 'Item'  | 'Item key'  |
 				| 'High shoes' | '39/19SD' |
 			And I select current line in "List" table
-			And I input "4,000" text in "Q" field of "ItemList" table
+			And I input "4,000" text in "Quantity" field of "ItemList" table
 			And I input "50,00" text in "Price" field of "ItemList" table
 			And I finish line editing in "ItemList" table
 		* Posting Purchase invoice 9 009
@@ -401,8 +400,8 @@ Scenario: _004 creating Sales invoice by last date and checking the mechanism fo
 				| 'Item'  | 'Item key'  |
 				| 'Boots' | 'Boots/S-8' |
 			And I select current line in "List" table
-			And I activate "Q" field in "ItemList" table
-			And I input "600,000" text in "Q" field of "ItemList" table
+			And I activate "Quantity" field in "ItemList" table
+			And I input "600,000" text in "Quantity" field of "ItemList" table
 			And I finish line editing in "ItemList" table
 			And I move to "Other" tab
 			And I input "13.08.2021 16:53:01" text in "Date" field
@@ -495,7 +494,7 @@ Scenario: _005 add Purchase invoice and checking the mechanism for aligning the 
 				| 'Item'  | 'Item key'  |
 				| 'Boots' | 'Boots/S-8' |
 			And I select current line in "List" table
-			And I input "500,000" text in "Q" field of "ItemList" table
+			And I input "500,000" text in "Quantity" field of "ItemList" table
 			And I input "50,00" text in "Price" field of "ItemList" table
 			And I finish line editing in "ItemList" table
 		* Posting Purchase invoice 9 009
@@ -609,6 +608,7 @@ Scenario: _005 add Purchase invoice and checking the mechanism for aligning the 
 			| 'Item'  | 'Item key' |
 			| 'Boots' | '39/18SD'  |
 		And I select current line in "List" table
+		And I input "50,00" text in "Price" field of "ItemList" table
 		And I click "Post and close" button
 	* Repeated posting document CalculationMovementCosts №1 and checking report
 		Given I open hyperlink "e1cib/list/Document.CalculationMovementCosts"
@@ -642,6 +642,7 @@ Scenario: _005 add Purchase invoice and checking the mechanism for aligning the 
 			| 'Item'  | 'Item key' |
 			| 'Boots' | 'Boots/S-8'  |
 		And I select current line in "List" table
+		And I input "50,00" text in "Price" field of "ItemList" table
 		And I click "Post and close" button
 		And I go to line in "List" table
 			| 'Number' | 'Partner' |
@@ -708,9 +709,9 @@ Scenario: _006 changing Sales invoice and checking the mechanism for aligning th
 			| '9 100'  |
 		And I activate "Date" field in "List" table
 		And I select current line in "List" table
-		And I activate "Q" field in "ItemList" table
+		And I activate "Quantity" field in "ItemList" table
 		And I select current line in "ItemList" table
-		And I input "400,000" text in "Q" field of "ItemList" table
+		And I input "400,000" text in "Quantity" field of "ItemList" table
 		And I finish line editing in "ItemList" table
 		And I click "Post and close" button
 	* Checking that the invoice is displayed as not relevance in the register BatchRelevance 
@@ -2098,9 +2099,9 @@ Scenario: _012 checking batches calculation for Retail sales receipt/ Retail ret
 			| '1'      |
 		And I select current line in "List" table
 		And I go to line in "ItemList" table
-			| 'Item'       | 'Item key' | 'Q'     |
+			| 'Item'       | 'Item key' | 'Quantity'     |
 			| 'High shoes' | '39/19SD'  | '2,000' |		
-		And I input "9,000" text in "Q" field of "ItemList" table
+		And I input "9,000" text in "Quantity" field of "ItemList" table
 		And I move to "Payments" tab
 		And I activate "Amount" field in "Payments" table
 		And I select current line in "Payments" table
@@ -2112,7 +2113,7 @@ Scenario: _012 checking batches calculation for Retail sales receipt/ Retail ret
 			| 'Number' |
 			| '1'      |
 		And I select current line in "List" table
-		And I input "2,000" text in "Q" field of "ItemList" table
+		And I input "2,000" text in "Quantity" field of "ItemList" table
 		And I move to "Payments" tab
 		And I activate "Amount" field in "Payments" table
 		And I select current line in "Payments" table
@@ -2180,8 +2181,8 @@ Scenario: _012 checking batches calculation for Retail sales receipt/ Retail ret
 				| 'Item'  | 'Item key'  |
 				| 'Dress' | 'M/Brown' |
 			And I select current line in "List" table
-			And I activate "Q" field in "ItemList" table
-			And I input "2,000" text in "Q" field of "ItemList" table
+			And I activate "Quantity" field in "ItemList" table
+			And I input "2,000" text in "Quantity" field of "ItemList" table
 			And I input "20,000" text in "Landed cost" field of "ItemList" table
 			And I finish line editing in "ItemList" table
 			And I move to "Payments" tab

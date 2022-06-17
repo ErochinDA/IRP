@@ -5,8 +5,8 @@ Procedure PresentationStartChoice(Object, Form, Item, ChoiceData, StandardProces
 		Return;
 	EndIf;
 
-	Notify = New NotifyDescription("OnFinishEditSerialLotNumbers", ThisObject, New Structure("Object, Form, AddInfo",
-		Object, Form, AddInfo));
+	Notify = New NotifyDescription("OnFinishEditSerialLotNumbers", ThisObject, 
+		New Structure("Object, Form, AddInfo", Object, Form, AddInfo));
 	OpeningParameters = New Structure();
 	OpeningParameters.Insert("Item", CurrentData.Item);
 	OpeningParameters.Insert("ItemKey", CurrentData.ItemKey);
@@ -15,8 +15,7 @@ Procedure PresentationStartChoice(Object, Form, Item, ChoiceData, StandardProces
 	OpeningParameters.Insert("Quantity", CurrentData.Quantity);
 	ArrayOfSelectedSerialLotNumbers = Object.SerialLotNumbers.FindRows(New Structure("Key", CurrentData.Key));
 	For Each Row In ArrayOfSelectedSerialLotNumbers Do
-		OpeningParameters.SerialLotNumbers.Add(
-		New Structure("SerialLotNumber, Quantity", Row.SerialLotNumber, Row.Quantity));
+		OpeningParameters.SerialLotNumbers.Add(New Structure("SerialLotNumber, Quantity", Row.SerialLotNumber, Row.Quantity));
 	EndDo;
 
 	OpenForm("Catalog.SerialLotNumbers.Form.EditListOfSerialLotNumbers", OpeningParameters, ThisObject, , , , Notify,
@@ -39,7 +38,7 @@ Procedure AddNewSerialLotNumbers(Result, Parameters, AddNewLot = False, AddInfo 
 		NewRow.SerialLotNumber = Row.SerialLotNumber;
 		NewRow.Quantity = Row.Quantity;
 	EndDo;
-	UpdateSerialLotNumbersPresentation(Parameters.Object, AddInfo);
+	UpdateSerialLotNumbersPresentation(Parameters.Object);
 	UpdateSerialLotNumbersTree(Parameters.Object, Parameters.Form);
 EndProcedure
 
@@ -66,22 +65,17 @@ Procedure PresentationClearingOnCopy(Object, Form, Item, AddInfo = Undefined) Ex
 	CurrentData.SerialLotNumbersPresentation.Clear();
 EndProcedure
 
-Procedure UpdateSerialLotNumbersPresentation(Object, AddInfo = Undefined) Export
-	ServerData = CommonFunctionsClientServer.GetFromAddInfo(AddInfo, "ServerData");
+Procedure UpdateSerialLotNumbersPresentation(Object) Export
 	For Each RowItemList In Object.ItemList Do
 		ArrayOfSerialLotNumbers = Object.SerialLotNumbers.FindRows(New Structure("Key", RowItemList.Key));
-		RowItemList.SerialLotNumbersPresentation.Clear();
-		RowItemList.SerialLotNumberIsFilling = False;
+		RowItemList.SerialLotNumbersPresentation.Clear();		
+		SerialCount = 0;
 		For Each RowSerialLotNumber In ArrayOfSerialLotNumbers Do
 			RowItemList.SerialLotNumbersPresentation.Add(RowSerialLotNumber.SerialLotNumber);
-			RowItemList.SerialLotNumberIsFilling = True;
+			SerialCount = SerialCount + RowSerialLotNumber.Quantity;
 		EndDo;
-		If ServerData = Undefined Then
-			RowItemList.UseSerialLotNumber = 
-				SerialLotNumbersServer.IsItemKeyWithSerialLotNumbers(RowItemList.ItemKey);
-		Else
-			RowItemList.UseSerialLotNumber = 
-				ServerData.ItemKeysWithSerialLotNumbers.Find(RowItemList.ItemKey) <> Undefined;
+		If RowItemList.UseSerialLotNumber Then
+			RowItemList.SerialLotNumberIsFilling = RowItemList.Quantity = SerialCount;
 		EndIf;
 	EndDo;
 EndProcedure
@@ -109,32 +103,10 @@ Procedure UpdateSerialLotNumbersTree(Object, Form) Export
 		EndIf;
 	EndDo;
 
-	For Each ItemTreeRows In Form.SerialLotNumbersTree.GetItems() Do
-		Form.Items.SerialLotNumbersTree.Expand(ItemTreeRows.GetID());
-	EndDo;
-EndProcedure
-
-Procedure UpdateUseSerialLotNumber(Object, Form, AddInfo = Undefined) Export
-	ServerData = CommonFunctionsClientServer.GetFromAddInfo(AddInfo, "ServerData");
-	
-	CurrentData = Form.Items.ItemList.CurrentData;
-	If CurrentData = Undefined Then
-		Return;
-	EndIf;
-
-	If ServerData = Undefined Then
-		CurrentData.UseSerialLotNumber = 
-			SerialLotNumbersServer.IsItemKeyWithSerialLotNumbers(CurrentData.ItemKey);
-	Else
-		CurrentData.UseSerialLotNumber = 
-			ServerData.ItemKeysWithSerialLotNumbers.Find(CurrentData.ItemKey) <> Undefined;
-	EndIf;
-	//CurrentData.UseSerialLotNumber = SerialLotNumbersServer.IsItemKeyWithSerialLotNumbers(CurrentData.ItemKey);
-
-	If Not CurrentData.UseSerialLotNumber Then
-		DeleteUnusedSerialLotNumbers(Object, CurrentData.Key);
-		UpdateSerialLotNumbersPresentation(Object, AddInfo);
-		UpdateSerialLotNumbersTree(Object, Form);
+	If Form.Items.SerialLotNumbersTree.Visible Then
+		For Each ItemTreeRows In Form.SerialLotNumbersTree.GetItems() Do
+			Form.Items.SerialLotNumbersTree.Expand(ItemTreeRows.GetID());
+		EndDo;
 	EndIf;
 EndProcedure
 
@@ -155,4 +127,101 @@ Procedure DeleteUnusedSerialLotNumbers(Object, KeyForDelete = Undefined) Export
 			Object.SerialLotNumbers.Delete(Row);
 		EndDo;
 	EndIf;
+EndProcedure
+
+// Start choice.
+// 
+// Parameters:
+//  Item - FormAllItems - Item
+//  ChoiceData - ValueList - Choice data
+//  StandardProcessing - Boolean - Standard processing
+//  Object - See Catalog.SerialLotNumbers.Form.ItemForm.Object
+//  Params - Structure:
+//  	* Item - CatalogRef.Items
+//  	* ItemKey - CatalogRef.ItemKeys
+//  	* ItemType - CatalogRef.ItemTypes
+Procedure StartChoice(Item, ChoiceData, StandardProcessing, Object, Params) Export
+	OpenSettings = DocumentsClient.GetOpenSettingsStructure();
+
+	OpenSettings.ArrayOfFilters = New Array();
+	OpenSettings.ArrayOfFilters.Add(DocumentsClientServer.CreateFilterItem("DeletionMark", True, DataCompositionComparisonType.NotEqual));
+	OpenSettings.ArrayOfFilters.Add(DocumentsClientServer.CreateFilterItem("Inactive", True, DataCompositionComparisonType.NotEqual));
+
+	OpenSettings.FormParameters = New Structure();
+	OpenSettings.FormParameters.Insert("ItemType", Params.ItemType);
+	OpenSettings.FormParameters.Insert("Item", Params.Item);
+	OpenSettings.FormParameters.Insert("ItemKey", Params.ItemKey);
+
+	OpenSettings.FormParameters.Insert("FillingData", New Structure("SerialLotNumberOwner", Params.ItemKey));
+
+	DocumentsClient.SerialLotNumberStartChoice(Undefined, Object, Item, ChoiceData, StandardProcessing,
+		OpenSettings);
+EndProcedure
+
+// Edit text change.
+// 
+// Parameters:
+//  Item - FormAllItems - Item
+//  Text - String - Text
+//  StandardProcessing - Boolean - Standard processing
+//  Object - See Catalog.SerialLotNumbers.Form.ItemForm.Object
+//  Params - Structure:
+//  	* Item - CatalogRef.Items
+//  	* ItemKey - CatalogRef.ItemKeys
+//  	* ItemType - CatalogRef.ItemTypes
+Procedure EditTextChange(Item, Text, StandardProcessing, Object, Params) Export
+	ArrayOfFilters = New Array();
+	ArrayOfFilters.Add(DocumentsClientServer.CreateFilterItem("DeletionMark", True, ComparisonType.NotEqual));
+	ArrayOfFilters.Add(DocumentsClientServer.CreateFilterItem("Inactive", True, ComparisonType.NotEqual));
+
+	AdditionalParameters = New Structure();
+	AdditionalParameters.Insert("ItemType", Params.ItemType);
+	AdditionalParameters.Insert("Item", Params.Item);
+	AdditionalParameters.Insert("ItemKey", Params.ItemKey);
+
+	DocumentsClient.SerialLotNumbersEditTextChange(Undefined, Object, Item, Text, StandardProcessing,
+		ArrayOfFilters, AdditionalParameters);
+EndProcedure
+
+Procedure StartChoiceSingle(Object, Form, Item, ChoiceData, StandardProcessing, AddInfo = Undefined) Export
+	StandardProcessing = False;
+	CurrentData = Form.Items.ItemList.CurrentData;
+	If CurrentData = Undefined Then
+		Return;
+	EndIf;
+
+	Notify = New NotifyDescription("OnFinishEditSerialLotNumbersSingle", ThisObject, New Structure("Object, Form, AddInfo",
+		Object, Form, AddInfo));
+	OpeningParameters = New Structure();
+	OpeningParameters.Insert("Item", CurrentData.Item);
+	OpeningParameters.Insert("ItemKey", CurrentData.ItemKey);
+	OpeningParameters.Insert("RowKey", CurrentData.Key);
+	OpeningParameters.Insert("SerialLotNumbers", New Array());
+	OpeningParameters.Insert("Quantity", CurrentData.PhysCount);
+	OpeningParameters.Insert("Single", True);
+	If Not CurrentData.SerialLotNumber.isEmpty() Then
+		OpeningParameters.SerialLotNumbers.Add(
+		New Structure("SerialLotNumber, Quantity", CurrentData.SerialLotNumber, CurrentData.PhysCount));
+	EndIf;
+
+	OpenForm("Catalog.SerialLotNumbers.Form.EditListOfSerialLotNumbers", OpeningParameters, ThisObject, , , , Notify,
+		FormWindowOpeningMode.LockOwnerWindow);
+EndProcedure
+
+Procedure AddNewSerialLotNumbersSingle(Result, Parameters, AddNewLot = False, AddInfo = Undefined) Export
+	If TypeOf(Result) <> Type("Structure") Then
+		Return;
+	EndIf;
+	If Not AddNewLot Then
+		ArrayOfItemsRows = Parameters.Object.ItemList.FindRows(New Structure("Key", Result.RowKey));
+		For Each ItemRow In ArrayOfItemsRows Do
+			For Each Row In Result.SerialLotNumbers Do
+				ItemRow.SerialLotNumber = Row.SerialLotNumber;
+			EndDo;	
+		EndDo;
+	EndIf;
+EndProcedure
+
+Procedure OnFinishEditSerialLotNumbersSingle(Result, Parameters) Export
+	AddNewSerialLotNumbersSingle(Result, Parameters, False, Parameters.AddInfo);
 EndProcedure

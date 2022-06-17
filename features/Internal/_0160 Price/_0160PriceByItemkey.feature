@@ -315,6 +315,49 @@ Scenario: _016001 base price fill (incl. VAT)
 		| '$$NumberPriceListBasicPriceByItemKey016001$$' | 'Price by item keys' | 'Basic Price Types' | 'Basic price' |
 		And I close all client application windows
 
+Scenario: _016002 change item in Price list and check filling item key
+	* Opening  price list
+		Given I open hyperlink "e1cib/list/Document.PriceList"
+		And I click the button named "FormCreate"
+	* Filling in the details of the price list by item key
+		And I change "Set price" radio button value to "By Item keys"
+	* Select item
+		And in the table "ItemKeyList" I click the button named "ItemKeyListAdd"
+		And I click choice button of the attribute named "ItemKeyListItem" in "ItemKeyList" table
+		And I go to line in "List" table
+			| 'Description' |
+			| 'Dress'       |
+		And I select current line in "List" table
+		And I activate "Item key" field in "ItemKeyList" table
+		And I click choice button of "Item key" attribute in "ItemKeyList" table
+		Then "Item keys" window is opened
+		And I go to line in "List" table
+			| 'Item'  | 'Item key' |
+			| 'Dress' | 'XS/Blue'  |
+		And I select current line in "List" table
+		And I finish line editing in "ItemKeyList" table
+		And I move to the next attribute
+		And I activate field named "ItemKeyListPrice" in "ItemKeyList" table
+		And I select current line in "ItemKeyList" table
+		And I input "200,00" text in the field named "ItemKeyListPrice" of "ItemKeyList" table
+		And I finish line editing in "ItemKeyList" table
+		And I activate field named "ItemKeyListItem" in "ItemKeyList" table
+		And I select current line in "ItemKeyList" table
+		And I click choice button of the attribute named "ItemKeyListItem" in "ItemKeyList" table
+		Then "Items" window is opened
+		And I go to line in "List" table
+			| 'Description' |
+			| 'Router'      |
+		And I select current line in "List" table
+		And I finish line editing in "ItemKeyList" table
+		And I move to the next attribute
+	* Check
+		And "ItemKeyList" table became equal
+			| 'Item'   | 'Item key' | 'Input unit' | 'Price' |
+			| 'Router' | 'Router'   | 'pcs'        | ''      |
+		And I close all client application windows
+		
+
 Scenario: _016005 check movements of the price list document by item key in register Prices by item keys
 	* Opening register Prices by item keys
 		Given I open hyperlink "e1cib/list/InformationRegister.PricesByItemKeys"
@@ -690,8 +733,8 @@ Scenario: _016011 check price calculation in the documents
 			| 'Item key' |
 			| 'XS/Blue'  |
 		And I select current line in "List" table
-		And I activate "Q" field in "ItemList" table
-		And I input "1,000" text in "Q" field of "ItemList" table
+		And I activate "Quantity" field in "ItemList" table
+		And I input "1,000" text in "Quantity" field of "ItemList" table
 		* Basic price type
 			And I activate "Price type" field in "ItemList" table
 			And I click choice button of "Price type" attribute in "ItemList" table
@@ -701,7 +744,7 @@ Scenario: _016011 check price calculation in the documents
 			And I select current line in "List" table
 			And I finish line editing in "ItemList" table
 			And "ItemList" table contains lines
-			| 'Item'  | 'Price'  | 'Item key' | 'Price type'        | 'Q'     |
+			| 'Item'  | 'Price'  | 'Item key' | 'Price type'        | 'Quantity'     |
 			| 'Dress' | '520,00' | 'XS/Blue'  | 'Basic Price Types' | '1,000' |
 		* Basic Price without VAT
 			And I activate "Price type" field in "ItemList" table
@@ -712,7 +755,7 @@ Scenario: _016011 check price calculation in the documents
 			And I select current line in "List" table
 			And I finish line editing in "ItemList" table
 			And "ItemList" table contains lines
-			| 'Item'  | 'Price'  | 'Item key' | 'Price type'        | 'Q'     |
+			| 'Item'  | 'Price'  | 'Item key' | 'Price type'        | 'Quantity'     |
 			| 'Dress' | '440,68' | 'XS/Blue'  | 'Basic Price without VAT' | '1,000' |
 		* Dependent Price New
 			And I activate "Price type" field in "ItemList" table
@@ -723,7 +766,7 @@ Scenario: _016011 check price calculation in the documents
 			And I select current line in "List" table
 			And I finish line editing in "ItemList" table
 			And "ItemList" table contains lines
-			| 'Item'  | 'Price'  | 'Item key' | 'Price type'        | 'Q'     |
+			| 'Item'  | 'Price'  | 'Item key' | 'Price type'        | 'Quantity'     |
 			| 'Dress' | '572,00' | 'XS/Blue'  | 'Dependent Price New' | '1,000' |
 		And I close all client application windows
 	* Price calculation in the Sales invoice
@@ -741,8 +784,8 @@ Scenario: _016011 check price calculation in the documents
 			| 'Item key' |
 			| 'XS/Blue'  |
 		And I select current line in "List" table
-		And I activate "Q" field in "ItemList" table
-		And I input "1,000" text in "Q" field of "ItemList" table
+		And I activate "Quantity" field in "ItemList" table
+		And I input "1,000" text in "Quantity" field of "ItemList" table
 		* Basic price type
 			And I activate "Price type" field in "ItemList" table
 			And I click choice button of "Price type" attribute in "ItemList" table
@@ -752,7 +795,7 @@ Scenario: _016011 check price calculation in the documents
 			And I select current line in "List" table
 			And I finish line editing in "ItemList" table
 			And "ItemList" table contains lines
-			| 'Item'  | 'Price'  | 'Item key' | 'Price type'        | 'Q'     |
+			| 'Item'  | 'Price'  | 'Item key' | 'Price type'        | 'Quantity'     |
 			| 'Dress' | '520,00' | 'XS/Blue'  | 'Basic Price Types' | '1,000' |
 		* Basic Price without VAT
 			And I activate "Price type" field in "ItemList" table
@@ -763,7 +806,7 @@ Scenario: _016011 check price calculation in the documents
 			And I select current line in "List" table
 			And I finish line editing in "ItemList" table
 			And "ItemList" table contains lines
-			| 'Item'  | 'Price'  | 'Item key' | 'Price type'        | 'Q'     |
+			| 'Item'  | 'Price'  | 'Item key' | 'Price type'        | 'Quantity'     |
 			| 'Dress' | '440,68' | 'XS/Blue'  | 'Basic Price without VAT' | '1,000' |
 		* Dependent Price
 			And I activate "Price type" field in "ItemList" table
@@ -774,7 +817,7 @@ Scenario: _016011 check price calculation in the documents
 			And I select current line in "List" table
 			And I finish line editing in "ItemList" table
 			And "ItemList" table contains lines
-			| 'Item'  | 'Price'  | 'Item key' | 'Price type'        | 'Q'     |
+			| 'Item'  | 'Price'  | 'Item key' | 'Price type'        | 'Quantity'     |
 			| 'Dress' | '572,00' | 'XS/Blue'  | 'Dependent Price New' | '1,000' |
 	* Price calculation in the Purchase order
 		Given I open hyperlink "e1cib/list/Document.PurchaseOrder"
@@ -791,8 +834,8 @@ Scenario: _016011 check price calculation in the documents
 			| 'Item key' |
 			| 'XS/Blue'  |
 		And I select current line in "List" table
-		And I activate "Q" field in "ItemList" table
-		And I input "1,000" text in "Q" field of "ItemList" table
+		And I activate "Quantity" field in "ItemList" table
+		And I input "1,000" text in "Quantity" field of "ItemList" table
 		* Basic price type
 			And I activate "Price type" field in "ItemList" table
 			And I click choice button of "Price type" attribute in "ItemList" table
@@ -802,7 +845,7 @@ Scenario: _016011 check price calculation in the documents
 			And I select current line in "List" table
 			And I finish line editing in "ItemList" table
 			And "ItemList" table contains lines
-			| 'Item'  | 'Price'  | 'Item key' | 'Price type'        | 'Q'     |
+			| 'Item'  | 'Price'  | 'Item key' | 'Price type'        | 'Quantity'     |
 			| 'Dress' | '520,00' | 'XS/Blue'  | 'Basic Price Types' | '1,000' |
 		* Basic Price without VAT
 			And I activate "Price type" field in "ItemList" table
@@ -813,7 +856,7 @@ Scenario: _016011 check price calculation in the documents
 			And I select current line in "List" table
 			And I finish line editing in "ItemList" table
 			And "ItemList" table contains lines
-			| 'Item'  | 'Price'  | 'Item key' | 'Price type'        | 'Q'     |
+			| 'Item'  | 'Price'  | 'Item key' | 'Price type'        | 'Quantity'     |
 			| 'Dress' | '440,68' | 'XS/Blue'  | 'Basic Price without VAT' | '1,000' |
 		* Dependent Price
 			And I activate "Price type" field in "ItemList" table
@@ -824,7 +867,7 @@ Scenario: _016011 check price calculation in the documents
 			And I select current line in "List" table
 			And I finish line editing in "ItemList" table
 			And "ItemList" table contains lines
-			| 'Item'  | 'Price'  | 'Item key' | 'Price type'        | 'Q'     |
+			| 'Item'  | 'Price'  | 'Item key' | 'Price type'        | 'Quantity'     |
 			| 'Dress' | '572,00' | 'XS/Blue'  | 'Dependent Price New' | '1,000' |
 	* Price calculation in the Purchase invoice
 		Given I open hyperlink "e1cib/list/Document.PurchaseInvoice"
@@ -841,8 +884,8 @@ Scenario: _016011 check price calculation in the documents
 			| 'Item key' |
 			| 'XS/Blue'  |
 		And I select current line in "List" table
-		And I activate "Q" field in "ItemList" table
-		And I input "1,000" text in "Q" field of "ItemList" table
+		And I activate "Quantity" field in "ItemList" table
+		And I input "1,000" text in "Quantity" field of "ItemList" table
 		* Basic price type
 			And I activate "Price type" field in "ItemList" table
 			And I click choice button of "Price type" attribute in "ItemList" table
@@ -852,7 +895,7 @@ Scenario: _016011 check price calculation in the documents
 			And I select current line in "List" table
 			And I finish line editing in "ItemList" table
 			And "ItemList" table contains lines
-			| 'Item'  | 'Price'  | 'Item key' | 'Price type'        | 'Q'     |
+			| 'Item'  | 'Price'  | 'Item key' | 'Price type'        | 'Quantity'     |
 			| 'Dress' | '520,00' | 'XS/Blue'  | 'Basic Price Types' | '1,000' |
 		* Basic Price without VAT
 			And I activate "Price type" field in "ItemList" table
@@ -863,7 +906,7 @@ Scenario: _016011 check price calculation in the documents
 			And I select current line in "List" table
 			And I finish line editing in "ItemList" table
 			And "ItemList" table contains lines
-			| 'Item'  | 'Price'  | 'Item key' | 'Price type'        | 'Q'     |
+			| 'Item'  | 'Price'  | 'Item key' | 'Price type'        | 'Quantity'     |
 			| 'Dress' | '440,68' | 'XS/Blue'  | 'Basic Price without VAT' | '1,000' |
 		* Dependent Price
 			And I activate "Price type" field in "ItemList" table
@@ -874,7 +917,7 @@ Scenario: _016011 check price calculation in the documents
 			And I select current line in "List" table
 			And I finish line editing in "ItemList" table
 			And "ItemList" table contains lines
-			| 'Item'  | 'Price'  | 'Item key' | 'Price type'        | 'Q'     |
+			| 'Item'  | 'Price'  | 'Item key' | 'Price type'        | 'Quantity'     |
 			| 'Dress' | '572,00' | 'XS/Blue'  | 'Dependent Price New' | '1,000' |
 		
 Scenario: _016012 price calculation when change input price in the Price list (by item key)	

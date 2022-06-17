@@ -13,7 +13,6 @@ Procedure EnterCountOnScan(Command)
 	ByOneScan = Items.ItemListEnterCountOnScan.Check; 
 EndProcedure
 
-
 &AtClient
 Procedure OnOpen(Cancel)
 	FillItemList(FormOwner.Object);
@@ -44,11 +43,14 @@ Procedure Done(Command)
 		If Row.Quantity = Row.ScannedQuantity Then
 			Continue; 
 		ElsIf Row.Quantity = 0 Then             
-			NewRow =  FormOwner.Object.ItemList.Add();
-			FillPropertyValues(NewRow, Row);
-			NewRow.Quantity = Row.ScannedQuantity;      
-			ClientModule.ItemListOnChange(FormOwner.Object, FormOwner, FormOwner.Items.ItemList, NewRow);
-			ClientModule.ItemListQuantityOnChange(FormOwner.Object, FormOwner, FormOwner.Items.ItemList, NewRow);
+			
+			FillingValues = New Structure();
+			FillingValues.Insert("Item"     , Row.Item);
+			FillingValues.Insert("ItemKey"  , Row.ItemKey);
+			FillingValues.Insert("Unit"     , Row.Unit);
+			FillingValues.Insert("Quantity" , Row.ScannedQuantity);
+			NewRow = ViewClient_V2.ItemListAddFilledRow(FormOwner.Object, FormOwner, FillingValues);
+						
 		ElsIf Row.ScannedQuantity = 0 Then
 			RowsToDelete = FormOwner.Object.ItemList.FindRows(New Structure("ItemKey", Row.ItemKey));
 			For Each RowToDelete In RowsToDelete Do
@@ -56,17 +58,17 @@ Procedure Done(Command)
 			EndDo;   
 			ClientModule.ItemListAfterDeleteRow(FormOwner.Object, FormOwner, FormOwner.Items.ItemList);
 		ElsIf Row.Quantity > Row.ScannedQuantity Then
+			
 			Diff = Row.Quantity - Row.ScannedQuantity;
-			RowsWithDiff = FormOwner.Object.ItemList.FindRows(New Structure("ItemKey", Row.ItemKey));
-			RowWithDiff = RowsWithDiff[0];
-			RowWithDiff.Quantity = RowWithDiff.Quantity - Diff;
-			ClientModule.ItemListQuantityOnChange(FormOwner.Object, FormOwner, FormOwner.Items.ItemList, NewRow);
-		ElsIf Row.Quantity < Row.ScannedQuantity Then       
-			Diff = Row.ScannedQuantity - Row.Quantity; 
-			RowsWithDiff = FormOwner.Object.ItemList.FindRows(New Structure("ItemKey", Row.ItemKey));
-			RowWithDiff = RowsWithDiff[0];
-			RowWithDiff.Quantity = RowWithDiff.Quantity + Diff;
-			ClientModule.ItemListQuantityOnChange(FormOwner.Object, FormOwner, FormOwner.Items.ItemList, NewRow);
+			RowWithDiff = FormOwner.Object.ItemList.FindRows(New Structure("ItemKey", Row.ItemKey))[0];
+			ViewClient_V2.SetItemListQuantity(FormOwner.Object, FormOwner, RowWithDiff, Diff);
+					
+		ElsIf Row.Quantity < Row.ScannedQuantity Then  
+			
+			Diff = Row.ScannedQuantity - Row.Quantity;
+			RowWithDiff = FormOwner.Object.ItemList.FindRows(New Structure("ItemKey", Row.ItemKey))[0];
+			ViewClient_V2.SetItemListQuantity(FormOwner.Object, FormOwner, RowWithDiff, Diff);
+			
 		Else
 			Continue;
 		EndIf;
@@ -99,24 +101,19 @@ EndProcedure
 
 &AtClient
 Procedure SearchByBarcode(Command, Barcode = "")
-	AddInfo = New Structure("ClientModule", ThisObject);
-	DocumentsClient.SearchByBarcode(Barcode, ThisObject, ThisObject, ThisObject, , AddInfo);
+	DocumentsClient.SearchByBarcode(Barcode, Object, ThisObject, ThisObject);
 EndProcedure
 
 &AtClient
 Async Procedure SearchByBarcodeEnd(Result, AdditionalParameters) Export
 
-	If Not AdditionalParameters.FoundedItems.Count()
-		And AdditionalParameters.Barcodes.Count() Then
-		CommonFunctionsClientServer.ShowUsersMessage(StrTemplate(R().S_019, AdditionalParameters.Barcodes[0]));
+	If Not Result.FoundedItems.Count()
+		And Result.Barcodes.Count() Then
+		CommonFunctionsClientServer.ShowUsersMessage(StrTemplate(R().S_019, Result.Barcodes[0]));
 		Return;
 	EndIf;
 
-	NotifyParameters = New Structure();
-	NotifyParameters.Insert("Form", ThisObject);
-	NotifyParameters.Insert("Object", ThisObject);
-
-	For Each Row In AdditionalParameters.FoundedItems Do
+	For Each Row In Result.FoundedItems Do
 #If Not WebClient Then		
 		If Not ByOneScan Then
 			Filter = New Structure();
@@ -125,11 +122,11 @@ Async Procedure SearchByBarcodeEnd(Result, AdditionalParameters) Export
 			SearchInItemList = Object.ItemList.FindRows(Filter);
 			Row.Insert("CurrentQuantity", 0);
 			Row.Insert("Diff", 0);
-			Row.Insert("QunatityAtDocument", 0);
+			Row.Insert("QuantityAtDocument", 0);
 			If SearchInItemList.Count() Then
-				Row.QunatityAtDocument = SearchInItemList[0].Quantity;
+				Row.QuantityAtDocument = SearchInItemList[0].Quantity;
 				Row.CurrentQuantity = SearchInItemList[0].ScannedQuantity;
-				Row.Diff = Row.QunatityAtDocument - Row.CurrentQuantity;
+				Row.Diff = Row.QuantityAtDocument - Row.CurrentQuantity;
 			EndIf;
 			NotifyOnClosing = New NotifyDescription("OnEditQuantityEnd", ThisObject);
 			OpenForm("DataProcessor.ScanBarcode.Form.RowForm", New Structure("FillingData" ,Row), ThisObject, , , , NotifyOnClosing);
